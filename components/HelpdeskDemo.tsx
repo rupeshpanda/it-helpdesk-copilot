@@ -5,18 +5,26 @@ import { ChatPanel } from "./ChatPanel";
 import { MemoryPanel } from "./MemoryPanel";
 import { McpTracePanel } from "./McpTracePanel";
 import { applyMemoryOps, loadMemory } from "@/lib/client/memoryStorage";
-import type { ChatTurn } from "@/lib/agent/run";
+import type { ChatTurn, TraceStep } from "@/lib/agent/run";
 import type { MemoryStore } from "@/lib/agent/memory";
 import type { RpcLogEntry } from "@/lib/mcp/client";
 
 interface ChatResponse {
   reply: string;
+  trace: TraceStep[];
   mcpLog: RpcLogEntry[];
   error?: string;
 }
 
+/** A chat turn plus, for an assistant turn, the tool calls that produced it -
+ * shown as inline annotations so the reasoning is visible without opening
+ * the MCP trace panel. The extra `toolCalls` field is display-only: the API
+ * route reads only `role`/`content` off each history entry, so carrying it
+ * along in the request body is harmless. */
+type DisplayMessage = ChatTurn & { toolCalls?: TraceStep[] };
+
 export function HelpdeskDemo() {
-  const [messages, setMessages] = useState<ChatTurn[]>([]);
+  const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [memory, setMemory] = useState<MemoryStore>({});
   const [mcpLog, setMcpLog] = useState<RpcLogEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -31,7 +39,7 @@ export function HelpdeskDemo() {
 
   async function handleSend(text: string) {
     setError(null);
-    const nextMessages: ChatTurn[] = [...messages, { role: "user", content: text }];
+    const nextMessages: DisplayMessage[] = [...messages, { role: "user", content: text }];
     setMessages(nextMessages);
     setLoading(true);
 
@@ -52,7 +60,10 @@ export function HelpdeskDemo() {
       if (data.memoryOps && data.memoryOps.length > 0) {
         setMemory(applyMemoryOps(data.memoryOps));
       }
-      setMessages([...nextMessages, { role: "assistant", content: data.reply }]);
+      setMessages([
+        ...nextMessages,
+        { role: "assistant", content: data.reply, toolCalls: data.trace ?? [] },
+      ]);
     } catch {
       setError("Could not reach the Copilot. Try again in a moment.");
     } finally {

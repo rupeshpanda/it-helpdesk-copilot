@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { ChatTurn } from "@/lib/agent/run";
+import type { ChatTurn, TraceStep } from "@/lib/agent/run";
+import { describeToolCall } from "@/lib/client/describeToolCall";
+
+type DisplayMessage = ChatTurn & { toolCalls?: TraceStep[] };
 
 const PRESETS = [
   "My employee ID is jsmith02. Always route my tickets to SAP Basis - Central, remember that.",
@@ -17,7 +20,7 @@ export function ChatPanel({
   loading,
   error,
 }: {
-  messages: ChatTurn[];
+  messages: DisplayMessage[];
   onSend: (text: string) => void;
   onNewSession: () => void;
   loading: boolean;
@@ -52,7 +55,23 @@ export function ChatPanel({
           </p>
         )}
         {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+          <div key={i} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
+            {m.role === "assistant" && m.toolCalls && m.toolCalls.length > 0 && (
+              <div className="mb-1.5 max-w-[85%] space-y-1">
+                {m.toolCalls.map((step, j) => (
+                  <div
+                    key={j}
+                    className="flex items-start gap-1.5 text-[12px] text-muted"
+                    title={JSON.stringify(step.result)}
+                  >
+                    <span className="mt-[1px] shrink-0">
+                      {step.result.status === "ok" ? "🔧" : "⚠️"}
+                    </span>
+                    <span>{describeToolCall(step)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <div
               className={`max-w-[85%] rounded-lg px-3.5 py-2.5 text-[13.5px] leading-relaxed ${
                 m.role === "user" ? "chat-bubble-user" : "chat-bubble-agent"
