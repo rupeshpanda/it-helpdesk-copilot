@@ -23,6 +23,11 @@ const DOMAIN_HINTS = [
   "approval", "expense", "purchase", "requisition", "outage", "down",
   "degraded", "status", "employee", "jsmith", "rodriguez", "chen", "whitfield",
   "remember", "recall", "terminal", "team", "helpdesk", "hi", "hello", "help",
+  // Memory/identity recall - the demo's whole point is that these should
+  // reach the model even before anything has been stored, since "nothing
+  // found" is itself a valid, informative answer for the model to give.
+  "my name", "who am i", "what do you know", "know about me", "my id",
+  "my preference", "my department", "my location", "forget",
 ];
 
 function looksRelevant(text: string): boolean {
