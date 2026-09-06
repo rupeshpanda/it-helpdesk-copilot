@@ -1,0 +1,51 @@
+/**
+ * Per-IP rate limiting for the live chat endpoint. Ported from
+ * good-tools-bad-tools' lib/rateLimit.ts.
+ *
+ * In-memory and therefore per-instance: a serverless deployment running
+ * several instances multiplies the effective allowance, and a cold start
+ * resets it. That is a real limitation and it is fine here. The goal is to
+ * stop a bored visitor holding down a button, not to defeat a determined
+ * attacker.
+ */
+
+const WINDOW_MS = 60_000;
+const MAX_REQUESTS = 15;
+
+const hits = new Map<string, number[]>();
+
+export function rateLimit(ip: string): {
+  allowed: boolean;
+  remaining: number;
+  retryAfterSec: number;
+} {
+  const now = Date.now();
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
+
+  if (recent.length >= MAX_REQUESTS) {
+    const oldest = Math.min(...recent);
+    hits.set(ip, recent);
+    return {
+      allowed: false,
+      remaining: 0,
+      retryAfterSec: Math.max(1, Math.ceil((WINDOW_MS - (now - oldest)) / 1000)),
+    };
+  }
+
+  recent.push(now);
+  hits.set(ip, recent);
+
+  if (hits.size > 5_000) {
+    for (const [key, times] of hits) {
+      if (times.every((t) => now - t >= WINDOW_MS)) hits.delete(key);
+    }
+  }
+
+  return { allowed: true, remaining: MAX_REQUESTS - recent.length, retryAfterSec: 0 };
+}
+
+export function clientIp(req: Request): string {
+  const fwd = req.headers.get("x-forwarded-for");
+  if (fwd) return fwd.split(",")[0].trim();
+  return req.headers.get("x-real-ip") ?? "unknown";
+}
