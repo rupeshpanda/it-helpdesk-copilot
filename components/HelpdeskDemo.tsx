@@ -5,13 +5,25 @@ import { ChatPanel } from "./ChatPanel";
 import { MemoryPanel } from "./MemoryPanel";
 import { McpTracePanel } from "./McpTracePanel";
 import { applyMemoryOps, loadMemory } from "@/lib/client/memoryStorage";
+import type { TraceEntry } from "@/lib/client/describeRpc";
 import type { ChatTurn, TraceStep } from "@/lib/agent/run";
 import type { MemoryStore } from "@/lib/agent/memory";
 import type { RpcLogEntry } from "@/lib/mcp/client";
 
+const COPILOT = "Copilot agent";
+const OTHER_TEAM = "Status bot";
+
 interface ChatResponse {
   reply: string;
   trace: TraceStep[];
+  mcpLog: RpcLogEntry[];
+  error?: string;
+}
+
+interface OtherTeamResponse {
+  consumer: string;
+  toolsAvailable: number;
+  result: { status: string; system?: string; systemStatus?: string; message?: string };
   mcpLog: RpcLogEntry[];
   error?: string;
 }
@@ -26,9 +38,11 @@ type DisplayMessage = ChatTurn & { toolCalls?: TraceStep[] };
 export function HelpdeskDemo() {
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [memory, setMemory] = useState<MemoryStore>({});
-  const [mcpLog, setMcpLog] = useState<RpcLogEntry[]>([]);
+  const [trace, setTrace] = useState<TraceEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [otherTeamBusy, setOtherTeamBusy] = useState(false);
+  const [otherTeamResult, setOtherTeamResult] = useState<string | null>(null);
 
   // Memory is loaded from localStorage only after mount - reading it during
   // server rendering would either throw (no `window`) or silently diverge
@@ -56,7 +70,10 @@ export function HelpdeskDemo() {
         return;
       }
 
-      setMcpLog(data.mcpLog ?? []);
+      // Each chat turn replaces the trace: it is "what happened for this
+      // answer", not a running log. The other team's bot appends to it.
+      setTrace((data.mcpLog ?? []).map((e) => ({ ...e, consumer: COPILOT })));
+      setOtherTeamResult(null);
       if (data.memoryOps && data.memoryOps.length > 0) {
         setMemory(applyMemoryOps(data.memoryOps));
       }
@@ -71,9 +88,38 @@ export function HelpdeskDemo() {
     }
   }
 
+  async function handleAskOtherTeam() {
+    setOtherTeamBusy(true);
+    setOtherTeamResult(null);
+    try {
+      const res = await fetch("/api/lab/it-helpdesk-copilot/other-team", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ system: "SAP S/4HANA" }),
+      });
+      const data = (await res.json()) as OtherTeamResponse;
+      if (!res.ok) {
+        setOtherTeamResult(data.error ?? "The bot could not reach the tool server.");
+        return;
+      }
+      setTrace((prev) => [...prev, ...(data.mcpLog ?? []).map((e) => ({ ...e, consumer: OTHER_TEAM }))]);
+      const r = data.result;
+      setOtherTeamResult(
+        r.status === "ok"
+          ? `Status bot, no model involved: ${r.system} is ${r.systemStatus}. Same server, ${data.toolsAvailable} tools on offer.`
+          : `Status bot: ${r.message ?? "the tool reported an error"}.`,
+      );
+    } catch {
+      setOtherTeamResult("Could not reach the tool server. Try again in a moment.");
+    } finally {
+      setOtherTeamBusy(false);
+    }
+  }
+
   function handleNewSession() {
     setMessages([]);
-    setMcpLog([]);
+    setTrace([]);
+    setOtherTeamResult(null);
     setError(null);
     // Deliberately NOT clearing memory - that persistence across a "new
     // session" is the entire point of this demo.
@@ -90,7 +136,12 @@ export function HelpdeskDemo() {
       />
       <div className="flex flex-col gap-5">
         <MemoryPanel memory={memory} />
-        <McpTracePanel log={mcpLog} />
+        <McpTracePanel
+          entries={trace}
+          onAskOtherTeam={handleAskOtherTeam}
+          otherTeamBusy={otherTeamBusy}
+          otherTeamResult={otherTeamResult}
+        />
       </div>
     </div>
   );

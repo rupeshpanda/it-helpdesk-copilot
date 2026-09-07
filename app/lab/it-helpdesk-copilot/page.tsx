@@ -49,8 +49,8 @@ export default function Page() {
           />
           <Block
             n="03"
-            title="A protocol boundary, not an import"
-            body="Every tool call crosses a hand-built MCP-shaped boundary: initialize, tools/list, tools/call. The agent never imports the tool functions directly - it only ever knows the client."
+            title="A standard door, not a private import"
+            body="Every tool call crosses a hand-built boundary shaped like the Model Context Protocol (MCP), an open standard for how an agent talks to its tools: initialize, tools/list, tools/call. The agent never imports the tool functions. Press the other team's bot button in the trace panel and a second program, with no model in it, uses the same door."
           />
         </div>
 

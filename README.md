@@ -29,7 +29,9 @@ than hidden behind a library.
 | `lib/mcp/registry.ts` | `ToolRegistry` - name/description/schema/function, nothing about JSON-RPC. |
 | `lib/mcp/server.ts` | `MCPServer` - the protocol boundary: `initialize`, `tools/list`, `tools/call`, JSON-RPC error objects for bad requests. |
 | `lib/mcp/client.ts` | `MCPClient` - the only thing the agent loop is allowed to call; logs every request/response pair. |
-| `app/api/lab/it-helpdesk-copilot/chat/route.ts` | The one API route: rate limiting, input caps, a relevance gate, then `runAgent()`. |
+| `app/api/lab/it-helpdesk-copilot/chat/route.ts` | The chat API route: rate limiting, input caps, a relevance gate, then `runAgent()`. |
+| `app/api/lab/it-helpdesk-copilot/other-team/route.ts` | A second consumer of the same tools with no language model at all (the site's `gatebot.py`): a different client name, the same `MCPServer`, the same three messages. Its exchange appears in the trace panel next to the agent's. |
+| `lib/client/describeRpc.ts`, `lib/client/describeToolCall.ts` | Plain-language descriptions of JSON-RPC exchanges and tool calls, so the trace and the chat read as sentences first and wire format second. |
 | `lib/client/memoryStorage.ts` | Reads/writes the browser's `localStorage` - the "disk" this demo uses in place of a server-side database. |
 | `components/HelpdeskDemo.tsx` | Owns chat/memory/trace state; the only client component that calls the API. |
 | `components/ChatPanel.tsx`, `MemoryPanel.tsx`, `McpTracePanel.tsx` | The three panels: chat, stored facts, and the live JSON-RPC trace. |
