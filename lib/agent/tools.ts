@@ -22,6 +22,9 @@ export function getTicketStatus(args: { ticket_id: string }): ToolResult {
     priority: ticket.priority,
     system: ticket.system,
     assignedTeam: ticket.assignedTeam,
+    // Who raised it, so the agent has an honest path to their office and
+    // role via check_user_access instead of assuming either.
+    raisedBy: ticket.employeeId,
     description: ticket.description,
     createdAt: ticket.createdAt,
   };

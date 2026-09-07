@@ -21,9 +21,10 @@ export const TOOL_SCHEMAS: ToolSchema[] = [
     name: "get_ticket_status",
     description:
       "Returns the status (open/in_progress/escalated/resolved/closed), priority (P1-P4), " +
-      "assigned SAP Basis team, affected system, and description for a specific incident " +
-      "ticket, identified by its ticket ID (e.g. 'INC0012345'). Use this to answer questions " +
-      "about a specific ticket's current state.",
+      "assigned SAP Basis team, affected system, description, and the employee ID of whoever " +
+      "raised it, for a specific incident ticket identified by its ticket ID (e.g. " +
+      "'INC0012345'). Pass that employee ID to check_user_access when you need their office " +
+      "or role. Never assume where a requester is based.",
     input_schema: {
       type: "object",
       properties: {
@@ -153,4 +154,12 @@ export const SYSTEM_PROMPT =
   "knowledge base first in case a known fix already applies. If the user states a preference " +
   "or fact worth keeping for future sessions, call remember to store it, even if they do not " +
   "explicitly ask you to. If a tool returns {\"status\": \"error\", ...}, explain the failure " +
-  "to the user in plain language rather than making up an answer.";
+  "to the user in plain language rather than making up an answer.\n\n" +
+  "When you are asked to work a ticket, do the triage properly before you conclude anything. " +
+  "Check who raised it and where they are based, check whether the affected system is healthy " +
+  "so you can tell a platform incident apart from a user-specific problem, and search the " +
+  "knowledge base for a known fix. If the system has an open incident that explains the ticket, " +
+  "say so and do not escalate it as an individual issue. Standing instructions stored in memory " +
+  "are routing policy: follow them when choosing a team, even when they disagree with the team " +
+  "the ticket is currently assigned to, and say which policy you applied. Keep the final answer " +
+  "to a few lines an analyst can act on.";

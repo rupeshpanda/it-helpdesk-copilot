@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { ChatPanel, type Entry } from "./ChatPanel";
 import { MemoryPanel } from "./MemoryPanel";
+import { TicketQueue, workTicketPrompt } from "./TicketQueue";
+import type { Ticket } from "@/lib/agent/data";
 import { applyMemoryOps, clearMemory, loadMemory } from "@/lib/client/memoryStorage";
 import type { PendingAction, TraceStep } from "@/lib/agent/run";
 import type { MemoryStore } from "@/lib/agent/memory";
@@ -178,6 +180,10 @@ export function HelpdeskDemo() {
     setError(null);
   }
 
+  function workTicket(t: Ticket) {
+    void send(workTicketPrompt(t));
+  }
+
   return (
     <div className="grid gap-5 lg:grid-cols-[1.45fr_1fr] lg:items-start">
       <ChatPanel
@@ -190,7 +196,10 @@ export function HelpdeskDemo() {
         onNewSession={newSession}
         onOtherProgram={() => void otherProgram()}
       />
-      <MemoryPanel memory={memory} onForget={() => setMemory(clearMemory())} />
+      <div className="flex flex-col gap-5">
+        <TicketQueue onWork={workTicket} busy={loading} />
+        <MemoryPanel memory={memory} onForget={() => setMemory(clearMemory())} />
+      </div>
     </div>
   );
 }

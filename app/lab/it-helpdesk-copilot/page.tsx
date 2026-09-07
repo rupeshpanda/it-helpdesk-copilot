@@ -18,16 +18,17 @@ export default function Page() {
             IT Helpdesk Copilot
           </h1>
           <p className="mt-5 max-w-2xl text-[17px] leading-relaxed text-ink">
-            A helpdesk agent for a fictional US company that runs SAP. It answers from real tools
-            over mock data, and every reply is a live model call.
+            Three tickets are waiting in a fictional US company that runs SAP. Press Work this
+            ticket and watch one get triaged: who raised it, whether the platform is healthy,
+            whether a known fix already exists, and who it should go to.
           </p>
           <p className="mt-3 max-w-2xl text-[17px] leading-relaxed text-ink">
-            Everything it does is shown next to the answer it produced. Which tools it called. The
-            messages it sent to reach them. What it wrote down to remember. And the moment it asks
-            permission before changing anything.
+            Every lookup it makes is shown beside the answer it produced, along with the protocol
+            messages it sent to reach them. It cannot change anything without asking you first.
           </p>
           <p className="mt-3 max-w-2xl text-[17px] leading-relaxed text-ink">
-            Try the four suggestions in order. The third works only because of the second.
+            Then give it a routing policy, start a new session, and work the same ticket again.
+            Same ticket, same lookups, different answer.
           </p>
         </section>
 
@@ -40,34 +41,34 @@ export default function Page() {
           <div className="mt-8 grid gap-6 md:grid-cols-2">
             <Block
               n="01"
-              title="The model never touched the data"
+              title="Four lookups, none of them guesses"
               body={[
-                "It read a one line description of each tool and asked for one by name. The Copilot's code ran it and handed back the result. That is the whole of tool calling.",
-                "The description is the interface. Change it and the model changes what it asks for.",
+                "Working one ticket took four calls: read the ticket, look up who raised it, check whether that SAP system is healthy, search the knowledge base. Each one is an ordinary function over ordinary data. The model ran none of them.",
+                "It read a one line description of each and asked for one by name. The Copilot's code decided to comply. That is the whole of tool calling, and it is why the agent can say the platform is fine rather than assume it.",
               ]}
             />
             <Block
               n="02"
-              title="Memory is outside the chat"
+              title="Memory changed the answer, not the work"
               body={[
-                "The fact you stated was written to this browser, not to the conversation. You started over and the chat was empty. The fact was not.",
-                "One rule decides conflicts. The newest value wins.",
+                "Give it a routing policy and work the same ticket again. The four lookups are identical, in the same order. The destination team is not, because a standing instruction outranked the team the ticket was assigned to.",
+                "That policy lives outside the conversation, so it survived you starting a new session. One rule settles conflicts: restate it and the newest version wins.",
               ]}
             />
             <Block
               n="03"
               title="MCP is the door, not the tools"
               body={[
-                "The Model Context Protocol fixes how an agent asks for a tool: connect, list, call. The Copilot never imports the tool code. It only speaks the protocol.",
-                "So a second program spoke it too, with no model at all, and got the same answer from the same server.",
+                "Every one of those lookups crossed the same boundary: connect, ask what exists, call one. Expand the messages under any answer to see them. The Copilot never imports the tool code, and it does not know what it can do until it asks.",
+                "A second program with no model in it speaks the same three messages to the same server. That is what a standard buys: the second team does not need a copy of your agent.",
               ]}
             />
             <Block
               n="04"
               title="Reading is safe. Changing something is not."
               body={[
-                "Every tool that only reads ran on request. The one that changes a ticket did not. The loop stopped, showed you the exact action, and waited.",
-                "That pause is not the model being careful. It is six lines in the agent loop that refuse to execute a write without an answer. Approve it and the tool runs. Decline it and nothing does, and the Copilot is told so rather than left to guess.",
+                "The four lookups ran on request. The escalation did not. The loop stopped, showed you the exact team it wanted to send the ticket to, and waited.",
+                "That pause is not the model being careful. It is a few lines in the loop that refuse to run a write without an answer. Decline it and nothing happens, and the Copilot is told it was refused rather than left to imply it worked.",
               ]}
             />
           </div>

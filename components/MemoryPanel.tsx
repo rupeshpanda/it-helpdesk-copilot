@@ -13,11 +13,14 @@ export function MemoryPanel({
   return (
     <div className="rounded-lg border border-border bg-card p-5">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="font-serif text-lg text-navy">Memory</h3>
-        <span className="tag-badge">this browser</span>
+        <h3 className="font-serif text-lg text-navy">Standing instructions</h3>
+        <span className="tag-badge">memory</span>
       </div>
       {entries.length === 0 ? (
-        <p className="text-[14px] text-ink">Nothing stored.</p>
+        <p className="text-[14px] text-ink">
+          Nothing stored. Anything kept here is read back at the start of every session, before you
+          type.
+        </p>
       ) : (
         <ul className="space-y-2.5">
           {entries.map(([key, fact], i) => (

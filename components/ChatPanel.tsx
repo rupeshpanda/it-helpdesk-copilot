@@ -16,13 +16,12 @@ export type Entry =
   | { kind: "other"; text: string; rpc: RpcLogEntry[] };
 
 export const PROMPTS = [
-  { label: "Ask about a system", text: "Is SAP S/4HANA up right now?" },
   {
-    label: "Tell it something to remember",
-    text: "My employee ID is jsmith02. Route my tickets to SAP Basis - Central.",
+    label: "Give it a routing policy",
+    text: "Remember this: all tickets raised from California offices go to SAP Basis - East, whatever team the ticket is currently assigned to.",
   },
-  { label: "Ask what it kept", text: "Show me my open tickets." },
-  { label: "Ask it to change something", text: "Escalate that ticket to my usual team." },
+  { label: "Ask what it has been told", text: "What standing instructions do you have?" },
+  { label: "Check a system", text: "Is SAP S/4HANA up right now?" },
 ];
 
 export function ChatPanel({
@@ -70,9 +69,13 @@ export function ChatPanel({
         style={{ maxHeight: 460 }}
       >
         {entries.length === 0 && (
-          <p className="text-[13.5px] leading-relaxed text-muted">
-            Try the four below in order. The third one works only because of the second.
-          </p>
+          <div className="text-[13.5px] leading-relaxed text-muted">
+            <p>Pick a ticket from the queue and press Work this ticket.</p>
+            <p className="mt-2">
+              To see memory change the outcome: work the Concur ticket, give the Copilot the
+              routing policy below, start a new session, then work the same ticket again.
+            </p>
+          </div>
         )}
 
         {entries.map((e, i) => {
