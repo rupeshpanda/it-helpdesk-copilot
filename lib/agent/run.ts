@@ -1,6 +1,6 @@
 /**
  * The function-calling lifecycle and multi-tool loop, mediated entirely by
- * MCP - direct TypeScript equivalent of SkyVault's agent.py run_agent().
+ * MCP. Direct TypeScript equivalent of SkyVault's agent.py run_agent().
  *
  *   Ask -> Tool request -> MCPClient.callTool() -> Return result -> Model answers
  *
@@ -41,7 +41,7 @@ export interface RunResult {
 
 /** Bridges the one difference between MCP's tools/list shape
  * ({name, description, inputSchema}) and what Anthropic's `tools`
- * parameter expects ({name, description, input_schema}) - same JSON
+ * parameter expects ({name, description, input_schema}). Same JSON
  * Schema underneath, different key name. The only place in the whole
  * project this translation happens. */
 function mcpToolsToAnthropicSchema(mcpTools: MCPToolListing[]): Anthropic.Tool[] {

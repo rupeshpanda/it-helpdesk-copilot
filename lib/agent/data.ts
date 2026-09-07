@@ -2,7 +2,7 @@
  * Mock "databases" for the IT Helpdesk Copilot. Plain objects standing in
  * for a USA-based enterprise's SAP landscape: an incident/ticket system, an
  * employee directory, system status, and a knowledge base. Synthetic data
- * only - no real company, employee, or SAP system status is represented.
+ * only. No real company, employee, or SAP system status is represented.
  */
 
 export interface Employee {
@@ -66,7 +66,7 @@ export const TICKETS: Record<string, Ticket> = {
     system: "SAP ECC (Production)",
     assignedTeam: "SAP Basis - Central",
     employeeId: "jsmith02",
-    description: "User unable to post a journal entry - authorization error on FB50.",
+    description: "User cannot post a journal entry. Authorization error on FB50.",
     createdAt: "2026-09-02T14:12:00-05:00",
   },
   INC0048227: {
@@ -111,7 +111,7 @@ export interface SystemHealth {
 }
 
 // Keyed by a lowercase, space-collapsed alias so a user's natural phrasing
-// ("sap ecc", "S/4", "successfactors") still resolves - see
+// ("sap ecc", "S/4", "successfactors") still resolves. See
 // normalizeSystemName() in tools.ts.
 export const SYSTEMS: Record<string, SystemHealth> = {
   "sap ecc": {
@@ -178,8 +178,8 @@ export const KB_ARTICLES: KnowledgeArticle[] = [
     title: "Resetting an SAP password after lockout",
     body:
       "After 3 failed logon attempts, SAP locks the user for 30 minutes " +
-      "automatically. For an immediate unlock, IT Basis can reset it manually - " +
-      "open a P3 ticket with the employee ID and affected system.",
+      "automatically. For an immediate unlock, IT Basis can reset it manually. " +
+      "Open a P3 ticket with the employee ID and affected system.",
     tags: ["password", "lockout", "reset", "logon"],
   },
   {

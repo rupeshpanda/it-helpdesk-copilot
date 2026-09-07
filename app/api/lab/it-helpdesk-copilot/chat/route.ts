@@ -23,9 +23,8 @@ const DOMAIN_HINTS = [
   "approval", "expense", "purchase", "requisition", "outage", "down",
   "degraded", "status", "employee", "jsmith", "rodriguez", "chen", "whitfield",
   "remember", "recall", "terminal", "team", "helpdesk", "hi", "hello", "help",
-  // Memory/identity recall - the demo's whole point is that these should
-  // reach the model even before anything has been stored, since "nothing
-  // found" is itself a valid, informative answer for the model to give.
+  // Memory and identity questions. These must reach the model even before
+  // anything is stored, because "nothing found" is itself a useful answer.
   "my name", "who am i", "what do you know", "know about me", "my id",
   "my preference", "my department", "my location", "forget",
 ];
@@ -69,7 +68,7 @@ export async function POST(req: Request) {
   }
   if (messages.length > MAX_HISTORY_MESSAGES) {
     return NextResponse.json(
-      { error: "This conversation has gotten long for a demo - try starting a new session." },
+      { error: "This conversation is long for a demo. Start a new session." },
       { status: 400 },
     );
   }

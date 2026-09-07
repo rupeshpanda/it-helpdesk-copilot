@@ -13,7 +13,7 @@ export const runtime = "nodejs";
  * program, identifying itself under a different client name, reaching the
  * same MCPServer through the same three messages (initialize, tools/list,
  * tools/call). It exists to make the enterprise argument for MCP visible
- * rather than asserted - the Copilot agent and this bot never share code
+ * rather than asserted. The Copilot agent and this bot never share code
  * beyond the client, yet the trace panel shows identical message shapes.
  *
  * No model call happens here, so the only cost is CPU. It shares the chat

@@ -1,8 +1,8 @@
 /**
- * The MCP Client - the only thing the agent loop (lib/agent/run.ts, the
+ * The MCP Client. The only thing the agent loop (lib/agent/run.ts, the
  * Host) is allowed to talk to. Formats requests as JSON-RPC, hands them to
  * an MCPServer, and unwraps the response. No real transport is used here
- * either (see server.ts) - the message *shape* crossing the boundary is
+ * either (see server.ts). The message *shape* crossing the boundary is
  * identical to what a real networked deployment would send, which is the
  * point of building it by hand.
  */

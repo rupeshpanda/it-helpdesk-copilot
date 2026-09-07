@@ -1,5 +1,5 @@
 /**
- * Reads/writes the browser's localStorage - the "disk" this demo uses in
+ * Reads/writes the browser's localStorage. The "disk" this demo uses in
  * place of SkyVault's memory_store.json, since a Vercel Node function has
  * no disk that survives between requests. Only ever called from client
  * components, after mount.
@@ -37,7 +37,7 @@ export function applyMemoryOps(ops: MemoryOp[]): MemoryStore {
   try {
     window.localStorage.setItem(KEY, JSON.stringify(current));
   } catch {
-    // localStorage can be unavailable (private mode, quota) - fail soft.
+    // localStorage can be unavailable (private mode, quota). Fail soft.
   }
   return current;
 }

@@ -2,7 +2,7 @@
  * Persistent memory, adapted for a stateless serverless function.
  *
  * SkyVault's Python memory.py backed remember()/recall() with a JSON file on
- * disk - state that outlives the process. A Vercel Node function has no disk
+ * disk. State that outlives the process. A Vercel Node function has no disk
  * to write to between requests, so this demo uses the browser's
  * localStorage as the "disk" instead: the client sends its current memory
  * facts with every chat request, this module executes remember/recall
@@ -10,7 +10,7 @@
  * `MemoryOp`s the client applies to localStorage after the response lands.
  *
  * The conflict rule is unchanged from SkyVault: same key overwrites the old
- * value - last write wins. The previous value is kept only as an audit
+ * value. Last write wins. The previous value is kept only as an audit
  * trail on the record, never surfaced by recall() or the context summary.
  */
 

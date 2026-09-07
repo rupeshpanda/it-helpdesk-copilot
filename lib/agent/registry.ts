@@ -2,7 +2,7 @@
  * Wires up the IT Helpdesk Copilot's eight tools into a ToolRegistry: the
  * six read tools from tools.ts, plus remember/recall bound to this
  * request's memory blob (see memory.ts). Direct equivalent of SkyVault's
- * mcp_server.py build_default_registry() - the one difference is that
+ * mcp_server.py build_default_registry(). The one difference is that
  * memory tools need per-request state (the client's localStorage blob),
  * so this is a function of `initialMemory` rather than a fixed singleton.
  */

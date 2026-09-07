@@ -1,13 +1,13 @@
 /**
- * The MCP protocol core and server side, built by hand with no MCP SDK -
- * plain objects shaped like JSON-RPC, passed directly between our own
- * classes (no real socket/HTTP/stdio transport - this is a single Vercel
- * Node function, same "two objects calling each other's methods" scope as
- * SkyVault's Python mcp_server.py).
+ * The MCP protocol core and server side, built by hand with no MCP SDK.
+ * Plain objects shaped like JSON-RPC, passed directly between our own
+ * classes. There is no real socket, HTTP or stdio transport here: this is
+ * a single Vercel Node function, the same "two objects calling each
+ * other's methods" scope as SkyVault's Python mcp_server.py.
  *
  * MCPServer speaks exactly three methods (initialize, tools/list,
  * tools/call) and delegates every one of them to a ToolRegistry. It knows
- * nothing about *how* a tool works internally - only that the registry can
+ * nothing about *how* a tool works internally. Only that the registry can
  * run it, and that a bad request needs a correctly-shaped error object
  * back, not a crash.
  */
@@ -31,7 +31,7 @@ export interface JsonRpcResponse {
 }
 
 /** Raised internally when a request can't be fulfilled at the protocol
- * level (unknown method, unknown tool, missing argument) - distinct from a
+ * level (unknown method, unknown tool, missing argument). Distinct from a
  * tool's own domain-level failure (e.g. system unreachable), which still
  * rides back inside a normal "result", exactly as SkyVault's
  * {"status": "error", ...} shape did. */

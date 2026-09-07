@@ -1,7 +1,7 @@
 /**
  * The actual actions the IT Helpdesk Copilot can take. Plain functions that
  * read data.ts and return { status: "ok", ... } or { status: "error",
- * message }, mirroring the Python tools.py convention from SkyVault - no LLM
+ * message }, mirroring the Python tools.py convention from SkyVault. No LLM
  * code in this file, no MCP code either. These are wrapped by an MCP
  * ToolRegistry (lib/mcp/registry.ts), never called directly by the agent loop.
  */
@@ -44,7 +44,7 @@ export function searchKnowledgeBase(args: { query: string }): ToolResult {
 /** SYSTEMS is keyed by a lowercase alias; a user or the model may phrase a
  * system name in several ways ("S/4", "SAP S4HANA", "successfactors"), so
  * this normalizes to the closest known key rather than requiring an exact
- * match - the same kind of normalization find_available_gate needed in the
+ * match. The same kind of normalization find_available_gate needed in the
  * Python version for "Terminal 2" vs "T2". */
 function normalizeSystemName(input: string): string | null {
   const q = input.toLowerCase().trim();
@@ -78,7 +78,7 @@ export function checkSystemStatus(args: { system_name: string }): ToolResult {
 
 /**
  * Without this, "escalate MY open ticket" has no honest way to resolve a
- * ticket ID from an employee ID - the model would have nothing to go on but
+ * ticket ID from an employee ID. The model would have nothing to go on but
  * a guess (and a guess that happens to match the schema's own illustrative
  * example is not evidence of real tool-driven behaviour, just a coincidence
  * worth avoiding by design).
@@ -118,7 +118,7 @@ export function checkUserAccess(args: { employee_id: string }): ToolResult {
 /**
  * Simulated write: this demo runs on a stateless serverless function with no
  * database, so escalation is not actually persisted between requests. That
- * is stated plainly here and in the UI rather than faked - the point of the
+ * is stated plainly here and in the UI rather than faked. The point of the
  * demo is tool calling and MCP, not a real ticketing backend.
  */
 export function escalateTicket(args: { ticket_id: string; team: string }): ToolResult {
@@ -130,6 +130,6 @@ export function escalateTicket(args: { ticket_id: string; team: string }): ToolR
     status: "ok",
     ticketId: ticket.ticketId,
     escalatedTo: args.team,
-    note: "Escalation simulated for this demo session - not persisted to a real ticket system.",
+    note: "Escalation simulated for this demo session. Nothing is written to a real ticket system.",
   };
 }

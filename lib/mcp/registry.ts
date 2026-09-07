@@ -2,7 +2,7 @@
  * The Tool Registry: wraps every real function (the six from
  * lib/agent/tools.ts, plus remember/recall from lib/agent/memory.ts) with
  * the name/description/schema metadata needed to describe it to a caller.
- * Knows nothing about JSON-RPC, tools/list, or the model - just "here is
+ * Knows nothing about JSON-RPC, tools/list, or the model. Just "here is
  * what I can run, and how to describe it." Direct TypeScript equivalent of
  * SkyVault's mcp_server.py ToolRegistry.
  */
@@ -35,7 +35,7 @@ export class ToolRegistry {
     return this.tools.has(name);
   }
 
-  /** MCP's tools/list shape uses "inputSchema" (camelCase) - not
+  /** MCP's tools/list shape uses "inputSchema" (camelCase). Not
    * Anthropic's "input_schema". This is the one place that translation
    * happens on the server side; the agent loop translates it back on the
    * client/Host side when building the model's `tools` parameter. */
