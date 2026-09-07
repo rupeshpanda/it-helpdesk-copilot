@@ -22,10 +22,13 @@ export default function Page() {
             over mock data, and every reply is a live model call.
           </p>
           <p className="mt-3 max-w-2xl text-[17px] leading-relaxed text-ink">
-            Four short steps. What a tool call is. What memory changes. What MCP adds. And where
-            the code stops and asks a human.
+            Everything it does is shown next to the answer it produced. Which tools it called. The
+            messages it sent to reach them. What it wrote down to remember. And the moment it asks
+            permission before changing anything.
           </p>
-          <p className="mt-3 max-w-2xl text-[17px] leading-relaxed text-ink">Press the first button.</p>
+          <p className="mt-3 max-w-2xl text-[17px] leading-relaxed text-ink">
+            Try the four suggestions in order. The third works only because of the second.
+          </p>
         </section>
 
         <section className="pb-14">
