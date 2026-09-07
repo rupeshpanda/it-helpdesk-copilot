@@ -1,172 +1,169 @@
+import type { Metadata } from "next";
 import { Footer, Header, SectionLabel } from "@/components/Chrome";
 
-function Section({
-  n,
-  title,
-  children,
-}: {
-  n: string;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="mt-14 max-w-2xl">
-      <div className="mb-2 font-mono text-[12px] text-muted">{n}</div>
-      <h2 className="mb-4 font-serif text-2xl text-navy">{title}</h2>
-      <div className="space-y-4 text-[14.5px] leading-relaxed text-muted">{children}</div>
-    </section>
-  );
-}
+export const metadata: Metadata = {
+  title: "How it works | IT Helpdesk Copilot",
+  description:
+    "The model never touches your systems. It asks, and your code decides. What a tool call is, what memory changes, and what MCP adds.",
+};
 
 export default function Page() {
   return (
     <>
       <Header current="guide" />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-10">
-        <SectionLabel>Concepts</SectionLabel>
-        <h1 className="mb-4 max-w-2xl font-serif text-[32px] leading-tight text-navy sm:text-[38px]">
-          How this Copilot actually works
-        </h1>
-        <p className="max-w-2xl text-[15px] leading-relaxed text-muted">
-          Ask a large language model to check a ticket, and it cannot. It has no ticket system.
-          What it has is a description of one, written by a developer, and a habit of asking
-          politely for that description to be acted on. Everything on this page is about what
-          happens between the question you asked in the demo and the answer that came back, and
-          why each piece of that pipeline exists.
-        </p>
 
-        <Section n="01" title="Tool calling: the model never runs your code">
+      <main className="mx-auto w-full max-w-5xl px-5">
+        <section className="py-16">
+          <SectionLabel>How it works</SectionLabel>
+          <h1 className="max-w-3xl font-serif text-4xl leading-tight text-navy md:text-5xl">
+            The model never touches your systems. It asks, and your code decides.
+          </h1>
+          <p className="mt-6 max-w-2xl text-[17px] leading-relaxed text-ink">
+            Everything on the demo page follows from that one sentence. Three parts below. What a
+            tool call is. What memory changes. What MCP adds.
+          </p>
+        </section>
+
+        <Section n="01" label="Tool calling" title="A tool is code you already have">
           <p>
-            The common explanation for how an AI assistant &ldquo;looks something up&rdquo; is
-            that it goes and checks. It does not. A language model produces text, one token at a
-            time, and nothing else. It cannot open a database connection, and it cannot call a
-            function in your codebase, because it does not run inside your codebase at all. It
-            runs on a separate server, reachable only through an API that accepts text and
-            returns text.
+            The Copilot has six functions that read tickets, system status, employee access and
+            knowledge base articles. Ordinary code. It worked before any model was involved and it
+            would keep working if you deleted the model tomorrow.
           </p>
           <p>
-            What actually happens is narrower and more mechanical. The developer hands the model
-            a list of tool declarations: a name, a description of what each one does, and the
-            shape of the arguments it expects. When a question needs one, the model does not run
-            it. It writes out, as structured text, which tool it wants and what arguments to pass.
-            The application reads that text, decides whether to honour it, runs the real function
-            if so, and sends the result back as another message. The model was never in control
-            of that decision. It only ever asked.
+            What makes that code a tool is the declaration written alongside it. A name. A sentence
+            saying what it does and when to use it. A schema for the arguments. The model sees that
+            and nothing else. Not the function, not the database.
           </p>
           <p>
-            This is why a tool&rsquo;s written description matters more than most people expect.
-            The model has no access to the underlying code, so a vague description
-            (&ldquo;checks tickets&rdquo;) and a precise one (&ldquo;returns status, priority, and
-            assigned team for a ticket ID such as INC0048213&rdquo;) are the entire difference
-            between the model picking the right tool with the right arguments, and guessing.
+            So when you asked whether SAP S/4HANA was up, the model did not check. It returned a
+            small block of JSON naming one tool and one argument. The Copilot read that block, ran
+            the function itself, and handed the result back.
+          </p>
+          <p className="border-l-2 border-accent pl-4 text-muted">
+            Your code decides whether to comply. Run it. Refuse it. Log it. Stop and ask a human
+            first. Every action an agent has ever taken was a line of somebody&rsquo;s code choosing
+            to honour a request.
           </p>
         </Section>
 
-        <Section n="02" title="Memory: what survives, and what does not">
+        <Section n="02" label="Memory" title="A conversation forgets. Memory does not.">
           <p>
-            A conversation with a model lives inside something called a context window: the full
-            list of messages sent back and forth, resubmitted in full on every turn. Anything in
-            that list is available to the model. Close the tab, and the list is gone. This is why
-            most assistants forget a preference stated five minutes earlier once a new session
-            starts. There was never anywhere else for it to live.
+            A model is sent the whole conversation on every turn. That list is the only thing it
+            remembers, and it dies when the session does. This is why most assistants make you
+            repeat yourself.
           </p>
           <p>
-            Persistent memory solves a narrower problem than it sounds like it should. It does
-            not give the model a bigger context window. It gives it a second, much smaller place
-            to write things down, one that outlives the conversation. In this demo, that place is
-            the browser&rsquo;s local storage rather than a database, chosen deliberately so the
-            demo needs no server-side data store at all. State a fact, and the Copilot calls a
-            <code className="mx-1 rounded bg-bg-secondary px-1.5 py-0.5 font-mono text-[12.5px] text-ink">
-              remember
-            </code>
-            tool that writes it there. Start a new session, and a short summary of everything
-            stored is read back in before the first message is even sent, the same way it would
-            be read from a file on disk in a server-side system.
+            Memory is a second, much smaller place to write things down. Here it is your browser.
+            State a fact and the Copilot stores it. Start a new session and a summary of everything
+            stored is read back before you type a word.
           </p>
           <p>
-            One decision matters more than it looks like it should: what happens when a fact is
-            restated with a different value. This system uses last write wins. The newest value
-            for a given key replaces the old one outright, and the old value is kept only as a
-            quiet audit trail, never shown back to the model or the user as a live alternative. A
-            system storing memory for ten thousand users at once would need to go further: facts
-            need to be scoped to the person who stated them, not stored in one shared list, or one
-            user&rsquo;s preference will silently overwrite another&rsquo;s.
+            That is why the second step worked. The chat was empty. The fact was not, so the
+            Copilot knew which team to escalate to without being told again.
+          </p>
+          <p>
+            One rule decides conflicts. Restate a fact with a different value and the new value
+            replaces the old one. The newest wins. That rule is fine for one operator and breaks at
+            ten thousand, where facts have to be scoped to the person who stated them or one
+            user&rsquo;s preference quietly overwrites another&rsquo;s.
           </p>
         </Section>
 
-        <Section n="03" title="MCP: a standard door, not a private import">
+        <Section n="03" label="MCP" title="A standard door, so the second team does not need a copy">
           <p>
-            The tools in this demo could have been wired directly into the code that talks to the
-            model, the way most first attempts at an AI assistant are built. That works until a
-            second team asks for access to the same tools. At that point the honest options are a
-            copy of the code, which will drift, or a shared interface that both sides agree to
-            speak. The Model Context Protocol is that second option, standardised.
+            These tools could have been wired straight into the Copilot. That works until a second
+            team asks for access. Then there are two options. Hand over a copy of the code, which
+            will drift from yours by the second week. Or agree on an interface both sides speak.
           </p>
           <p>
-            It defines three message types, each shaped like a JSON-RPC call: a request carries a
-            method name, its arguments, and an ID; a response carries the same ID back, with
-            either a result or an error, never both.
-            <code className="mx-1 rounded bg-bg-secondary px-1.5 py-0.5 font-mono text-[12.5px] text-ink">
-              initialize
-            </code>
-            is a handshake between a client and a server.
-            <code className="mx-1 rounded bg-bg-secondary px-1.5 py-0.5 font-mono text-[12.5px] text-ink">
-              tools/list
-            </code>
-            asks the server what it can do.
-            <code className="mx-1 rounded bg-bg-secondary px-1.5 py-0.5 font-mono text-[12.5px] text-ink">
-              tools/call
-            </code>
-            asks it to actually do one of those things. Nothing about this demo uses a real
-            network connection for that exchange, since client and server run inside the same
-            request, but the messages passed between them are shaped exactly as they would be if
-            they did.
+            The Model Context Protocol is the second option, written down. Three messages. Connect
+            to the server. Ask what it offers. Call one of the things it offers.
           </p>
           <p>
-            The arrangement has three named roles. The Host is the part that owns the
-            conversation with the model and decides when a tool is needed, in this case the agent
-            loop behind the chat you were using. The Client is the only thing the Host is allowed
-            to speak to. It never touches a tool&rsquo;s real implementation. The Server is the
-            other side of that boundary: it holds the actual tool functions, and answers only
-            those three message types. A second consumer, built by someone who has never seen the
-            Host&rsquo;s code, could reach the same tools through the same Client interface and
-            get identical behaviour.
+            The Copilot never imports the tool code. It only speaks the protocol. That is why the
+            button on the third step worked. A separate program, with no model inside it at all,
+            asked the same server in the same way and got the same answer.
           </p>
           <p>
-            What this protocol does not solve is worth naming honestly. It standardises one tool
-            call at a time, answered once, by one server. It says nothing about two independent
-            agents negotiating a task together, asking each other clarifying questions before
-            committing to an answer. That is a different, harder problem, and a different
-            protocol&rsquo;s job.
+            What MCP does not do is worth naming plainly. It carries one call at a time, answered
+            once, by one server. Two agents negotiating a task between themselves, asking each
+            other questions before committing to anything, is a harder problem and a different
+            protocol.
           </p>
         </Section>
 
-        <Section n="04" title="This demo's own request, start to finish">
-          <p>
-            One message sent from the chat box takes this path. Your browser reads whatever facts
-            are currently in local storage and sends them, along with the conversation so far, to
-            a server function. That function builds a short text summary of those facts and adds
-            it to the model&rsquo;s instructions, so the model already knows them without being
-            asked. It also builds a fresh Client and Server pair for this one request, and asks
-            the Client which tools exist.
-          </p>
-          <p>
-            The model is then sent the conversation and the tool list together. If it decides a
-            tool is needed, it says so in its response rather than running anything. The server
-            takes that request, sends it through the Client to the Server as a
-            <code className="mx-1 rounded bg-bg-secondary px-1.5 py-0.5 font-mono text-[12.5px] text-ink">
-              tools/call
-            </code>
-            message, gets a result back, and hands that result to the model as the next message
-            in the conversation. This can repeat several times for one question. Once the model
-            has enough to answer in plain language, it does, and that answer, along with every
-            JSON-RPC message exchanged along the way, is sent back to your browser. Any new facts
-            the model chose to remember are written to local storage at that point, ready for the
-            next session.
+        <Section n="04" label="End to end" title="What happened when you pressed the button">
+          <ol className="space-y-3 text-[15.5px] leading-relaxed text-ink">
+            {[
+              "Your browser sent the question, along with whatever facts it had stored.",
+              "The server turned those facts into a short summary and put it in the model's instructions.",
+              "It built a tool server and a client for this one request, then asked the client what tools existed.",
+              "The model read the question and the tool list, and asked for a tool by name.",
+              "The client passed that request across the protocol boundary. The server ran the function and returned the result.",
+              "The model read the result and answered in plain language. Anything worth remembering was written back to your browser.",
+            ].map((step, i) => (
+              <li key={i} className="flex gap-3">
+                <span className="font-mono text-[13px] text-muted">{String(i + 1).padStart(2, "0")}</span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-6">
+            Steps four and five can repeat several times before the model has enough to answer. The
+            demo shows each pass as its own line.
           </p>
         </Section>
+
+        <section className="border-t border-border py-14">
+          <div className="max-w-3xl rounded-lg border border-border bg-bg-secondary p-6">
+            <p className="text-[14.5px] leading-relaxed text-muted">
+              The protocol layer here is written by hand, with no MCP library, so the three messages
+              are readable in about a hundred lines. Everything is in{" "}
+              <a
+                href="https://github.com/rupeshpanda/it-helpdesk-copilot"
+                className="text-accent underline underline-offset-2 hover:text-accent-hover"
+              >
+                the repository
+              </a>
+              , or go back to{" "}
+              <a
+                href="/lab/it-helpdesk-copilot"
+                className="text-accent underline underline-offset-2 hover:text-accent-hover"
+              >
+                the demo
+              </a>
+              .
+            </p>
+          </div>
+        </section>
       </main>
+
       <Footer />
     </>
+  );
+}
+
+function Section({
+  n,
+  label,
+  title,
+  children,
+}: {
+  n: string;
+  label: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="border-t border-border py-14">
+      <SectionLabel>
+        {n} · {label}
+      </SectionLabel>
+      <h2 className="max-w-3xl font-serif text-3xl leading-snug text-navy">{title}</h2>
+      <div className="mt-5 max-w-2xl space-y-4 text-[15.5px] leading-relaxed text-ink">
+        {children}
+      </div>
+    </section>
   );
 }
