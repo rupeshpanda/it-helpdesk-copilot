@@ -19,8 +19,8 @@ export default function Page() {
             The model never touches your systems. It asks, and your code decides.
           </h1>
           <p className="mt-6 max-w-2xl text-[17px] leading-relaxed text-ink">
-            Everything on the demo page follows from that one sentence. Three parts below. What a
-            tool call is. What memory changes. What MCP adds.
+            Everything on the demo page follows from that one sentence. Four parts below. What a
+            tool call is. What memory changes. What MCP adds. And where the asking stops.
           </p>
         </section>
 
@@ -93,14 +93,39 @@ export default function Page() {
           </p>
         </Section>
 
-        <Section n="04" label="End to end" title="What happened when you pressed the button">
+        <Section n="04" label="Control" title="Reading is safe. Changing something is not.">
+          <p>
+            Six of the seven tools only read. Asking for one of those is cheap, and a wrong answer
+            is the worst outcome. The seventh changes a ticket, and that is a different kind of
+            request entirely.
+          </p>
+          <p>
+            So the loop treats it differently. When the model asked to escalate, nothing ran. The
+            loop stopped, handed back the exact tool name and arguments it had been asked for, and
+            waited for a person. Approve and the tool runs. Decline and it never does, and the
+            model is told plainly that the action was refused, so it reports that instead of
+            claiming success.
+          </p>
+          <p>
+            Nothing about that is the model being careful. The model asked for the same thing
+            either way. The difference is a few lines in the loop that check whether a tool changes
+            anything before running it.
+          </p>
+          <p className="border-l-2 border-accent pl-4 text-muted">
+            This is the question worth settling before an agent reaches production, not after.
+            While it only reads, a mistake is a wrong answer. The day it cancels an order, the same
+            mistake is an incident.
+          </p>
+        </Section>
+
+        <Section n="05" label="End to end" title="What happened when you pressed the button">
           <ol className="space-y-3 text-[15.5px] leading-relaxed text-ink">
             {[
               "Your browser sent the question, along with whatever facts it had stored.",
               "The server turned those facts into a short summary and put it in the model's instructions.",
               "It built a tool server and a client for this one request, then asked the client what tools existed.",
               "The model read the question and the tool list, and asked for a tool by name.",
-              "The client passed that request across the protocol boundary. The server ran the function and returned the result.",
+              "If that tool only reads, the client passed the request across the protocol boundary and the server ran it. If it changes something, the loop stopped here and waited for you.",
               "The model read the result and answered in plain language. Anything worth remembering was written back to your browser.",
             ].map((step, i) => (
               <li key={i} className="flex gap-3">

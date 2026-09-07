@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runAgent, type ChatTurn } from "@/lib/agent/run";
+import { runAgent, type ChatTurn, type Resume } from "@/lib/agent/run";
 import type { MemoryStore } from "@/lib/agent/memory";
 import { clientIp, rateLimit } from "@/lib/rateLimit";
 
@@ -9,6 +9,7 @@ export const maxDuration = 60;
 const MAX_MESSAGE_CHARS = 400;
 const MAX_HISTORY_MESSAGES = 16;
 const MAX_MEMORY_JSON_CHARS = 5_000;
+const MAX_RESUME_JSON_CHARS = 100_000;
 
 /**
  * A crude relevance gate, same spirit as good-tools-bad-tools' looksRelevant().
@@ -58,10 +59,25 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Malformed request." }, { status: 400 });
   }
 
-  const { messages, memory } = (body ?? {}) as {
+  const { messages, memory, resume } = (body ?? {}) as {
     messages?: unknown;
     memory?: unknown;
+    resume?: unknown;
   };
+
+  // A decision on a paused action: the state came from this endpoint, and
+  // goes straight back to it. Only the boolean is trusted as intent.
+  let resumeArg: Resume | undefined;
+  if (resume && typeof resume === "object") {
+    const r = resume as { state?: unknown; approved?: unknown };
+    if (!Array.isArray(r.state) || typeof r.approved !== "boolean") {
+      return NextResponse.json({ error: "Malformed decision." }, { status: 400 });
+    }
+    if (JSON.stringify(r.state).length > MAX_RESUME_JSON_CHARS) {
+      return NextResponse.json({ error: "That conversation is too large to resume." }, { status: 400 });
+    }
+    resumeArg = { state: r.state, approved: r.approved };
+  }
 
   if (!Array.isArray(messages) || messages.length === 0) {
     return NextResponse.json({ error: "Send at least one message." }, { status: 400 });
@@ -91,7 +107,8 @@ export async function POST(req: Request) {
   if (!lastUserMessage || !lastUserMessage.content) {
     return NextResponse.json({ error: "Ask something first." }, { status: 400 });
   }
-  if (!looksRelevant(lastUserMessage.content)) {
+  // A decision carries no new question, so the gate does not apply to it.
+  if (!resumeArg && !looksRelevant(lastUserMessage.content)) {
     return NextResponse.json(
       {
         error:
@@ -111,7 +128,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const result = await runAgent(history, memoryStore, apiKey);
+    const result = await runAgent(history, memoryStore, apiKey, resumeArg);
     return NextResponse.json(result);
   } catch (e) {
     console.error("agent run failed", e);

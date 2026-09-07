@@ -6,17 +6,14 @@ import { MemoryPanel } from "./MemoryPanel";
 import { McpTracePanel } from "./McpTracePanel";
 import { applyMemoryOps, clearMemory, loadMemory } from "@/lib/client/memoryStorage";
 import type { TraceEntry } from "@/lib/client/describeRpc";
-import type { TraceStep } from "@/lib/agent/run";
+import type { PendingAction, TraceStep } from "@/lib/agent/run";
 import type { MemoryStore } from "@/lib/agent/memory";
 import type { RpcLogEntry } from "@/lib/mcp/client";
 
 /**
- * A walkthrough in three acts, one concept each, showing only what that act
- * needs. Tools first: one question, one reply, one line saying what it did.
- * Memory second: teach it, start over, ask again; the memory box appears
- * only once there is something in it. MCP third: the messages behind the
- * last answer, then a second program using the same server. Free chat comes
- * after, once the reader knows what each box is.
+ * A walkthrough in four acts, one idea each, showing only what that act
+ * needs. Tools, then memory, then the protocol, then the control boundary.
+ * Free chat comes after, once the reader knows what each box is.
  */
 
 const AGENT = "the Copilot";
@@ -24,11 +21,12 @@ const OTHER = "another program";
 
 const ASK_STATUS = "Is SAP S/4HANA up right now?";
 const TEACH = "My employee ID is jsmith02. Route my tickets to SAP Basis - Central.";
-const ASK_ESCALATE = "Escalate my open ticket to the right team.";
+const ASK_TICKETS = "Show me my open tickets.";
+const ASK_ESCALATE = "Escalate that ticket to my usual team.";
 
-type Act = 1 | 2 | 3 | 4;
+type Act = 1 | 2 | 3 | 4 | 5;
 
-const ACT: Record<1 | 2 | 3, { label: string; intro: string }> = {
+const ACT: Record<1 | 2 | 3 | 4, { label: string; intro: string }> = {
   1: {
     label: "Tools",
     intro: "The model cannot read a database. It asks a tool to, and the code decides whether to run it.",
@@ -41,6 +39,10 @@ const ACT: Record<1 | 2 | 3, { label: string; intro: string }> = {
     label: "MCP",
     intro: "Every tool call so far crossed a standard boundary. This is what went across it.",
   },
+  4: {
+    label: "Control",
+    intro: "Reading is safe. Changing something is not. Watch where the code stops and asks.",
+  },
 };
 
 interface ChatResponse {
@@ -48,6 +50,8 @@ interface ChatResponse {
   trace: TraceStep[];
   mcpLog: RpcLogEntry[];
   memoryOps?: Parameters<typeof applyMemoryOps>[0];
+  pending?: PendingAction;
+  resumeState?: unknown[];
   error?: string;
 }
 
@@ -68,11 +72,36 @@ export function HelpdeskDemo() {
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [otherResult, setOtherResult] = useState<string | null>(null);
+  const [pending, setPending] = useState<PendingAction | null>(null);
+  const [resumeState, setResumeState] = useState<unknown[] | null>(null);
 
-  // localStorage is only readable after mount.
   useEffect(() => {
     setMemory(loadMemory());
   }, []);
+
+  /** Applies whatever came back, whether it finished or stopped for a
+   * decision. Shared by asking and by deciding. */
+  function absorb(data: ChatResponse, base: DisplayMessage[]) {
+    setTrace((data.mcpLog ?? []).map((e) => ({ ...e, consumer: AGENT })));
+    setOtherResult(null);
+    if (data.memoryOps?.length) setMemory(applyMemoryOps(data.memoryOps));
+
+    const next = [...base];
+    if (data.reply) next.push({ role: "assistant", content: data.reply, toolCalls: data.trace ?? [] });
+    else if (data.trace?.length) {
+      // Tools ran but the model said nothing alongside them. Keep the work visible.
+      next.push({ role: "assistant", content: "", toolCalls: data.trace });
+    }
+    setMessages(next);
+
+    if (data.pending && data.resumeState) {
+      setPending(data.pending);
+      setResumeState(data.resumeState);
+    } else {
+      setPending(null);
+      setResumeState(null);
+    }
+  }
 
   async function send(text: string): Promise<boolean> {
     setError(null);
@@ -91,14 +120,45 @@ export function HelpdeskDemo() {
         setError(data.error ?? "Something went wrong.");
         return false;
       }
-      setTrace((data.mcpLog ?? []).map((e) => ({ ...e, consumer: AGENT })));
-      setOtherResult(null);
-      if (data.memoryOps?.length) setMemory(applyMemoryOps(data.memoryOps));
-      setMessages([...next, { role: "assistant", content: data.reply, toolCalls: data.trace ?? [] }]);
+      absorb(data, next);
       return true;
     } catch {
       setError("Could not reach the Copilot. Try again in a moment.");
       return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function decide(approved: boolean) {
+    if (!resumeState) return;
+    setError(null);
+    setLoading(true);
+    setPending(null);
+    try {
+      const res = await fetch("/api/lab/it-helpdesk-copilot/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages,
+          memory,
+          resume: { state: resumeState, approved },
+        }),
+      });
+      const data = (await res.json()) as ChatResponse;
+      if (!res.ok) {
+        setError(data.error ?? "Something went wrong.");
+        return;
+      }
+      absorb(data, messages);
+      setNote(
+        approved
+          ? null
+          : "Declined. The tool was never called, and the Copilot was told so.",
+      );
+      setStep(1);
+    } catch {
+      setError("Could not reach the Copilot. Try again in a moment.");
     } finally {
       setLoading(false);
     }
@@ -140,6 +200,8 @@ export function HelpdeskDemo() {
     setMessages([]);
     setNote(null);
     setError(null);
+    setPending(null);
+    setResumeState(null);
     if (next === 1) {
       setTrace([]);
       setOtherResult(null);
@@ -157,10 +219,10 @@ export function HelpdeskDemo() {
   return (
     <div className="space-y-5">
       <div className="rounded-lg border border-border bg-card p-5">
-        {act !== 4 ? (
+        {act !== 5 ? (
           <div className="mb-5">
             <span className="section-label">
-              Step {act} of 3 · {ACT[act].label}
+              Step {act} of 4 · {ACT[act].label}
             </span>
             <p className="text-[15px] leading-relaxed text-ink">{ACT[act].intro}</p>
           </div>
@@ -178,8 +240,10 @@ export function HelpdeskDemo() {
           loading={loading}
           error={error}
           note={note}
-          showComposer={act === 4}
+          showComposer={act === 5}
           onSend={(t) => void send(t)}
+          pending={pending}
+          onDecide={(approved) => void decide(approved)}
         />
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -208,8 +272,8 @@ export function HelpdeskDemo() {
             </Action>
           )}
           {act === 2 && step === 2 && (
-            <Action disabled={loading} onClick={() => run(() => send(ASK_ESCALATE), 3)}>
-              Ask: {ASK_ESCALATE}
+            <Action disabled={loading} onClick={() => run(() => send(ASK_TICKETS), 3)}>
+              Ask: {ASK_TICKETS}
             </Action>
           )}
           {act === 2 && step === 3 && <Next onClick={() => go(3)}>Next: MCP</Next>}
@@ -224,9 +288,16 @@ export function HelpdeskDemo() {
               </button>
             </>
           )}
-          {act === 3 && step === 1 && <Next onClick={() => go(4)}>Finish</Next>}
+          {act === 3 && step === 1 && <Next onClick={() => go(4)}>Next: control</Next>}
 
-          {act === 4 && (
+          {act === 4 && step === 0 && !pending && (
+            <Action disabled={loading} onClick={() => void send(ASK_ESCALATE)}>
+              Ask: {ASK_ESCALATE}
+            </Action>
+          )}
+          {act === 4 && step === 1 && <Next onClick={() => go(5)}>Finish</Next>}
+
+          {act === 5 && (
             <>
               <button onClick={() => go(1)} className="text-[13px] text-muted hover:text-ink">
                 Start again
@@ -243,7 +314,7 @@ export function HelpdeskDemo() {
       {(showMemory || showTrace) && (
         <div className={`grid gap-5 ${showMemory && showTrace ? "lg:grid-cols-2" : ""}`}>
           {showMemory && (
-            <MemoryPanel memory={memory} onForget={act === 4 ? () => setMemory(clearMemory()) : undefined} />
+            <MemoryPanel memory={memory} onForget={act === 5 ? () => setMemory(clearMemory()) : undefined} />
           )}
           {showTrace && <McpTracePanel entries={trace} />}
         </div>

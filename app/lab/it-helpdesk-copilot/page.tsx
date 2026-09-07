@@ -22,7 +22,8 @@ export default function Page() {
             over mock data, and every reply is a live model call.
           </p>
           <p className="mt-3 max-w-2xl text-[17px] leading-relaxed text-ink">
-            Three short steps. What a tool call is. What memory changes. What MCP adds.
+            Four short steps. What a tool call is. What memory changes. What MCP adds. And where
+            the code stops and asks a human.
           </p>
           <p className="mt-3 max-w-2xl text-[17px] leading-relaxed text-ink">Press the first button.</p>
         </section>
@@ -33,7 +34,7 @@ export default function Page() {
 
         <section className="border-t border-border py-14">
           <h2 className="max-w-3xl font-serif text-3xl leading-snug text-navy">What just happened</h2>
-          <div className="mt-8 grid gap-6 md:grid-cols-3">
+          <div className="mt-8 grid gap-6 md:grid-cols-2">
             <Block
               n="01"
               title="The model never touched the data"
@@ -58,6 +59,14 @@ export default function Page() {
                 "So a second program spoke it too, with no model at all, and got the same answer from the same server.",
               ]}
             />
+            <Block
+              n="04"
+              title="Reading is safe. Changing something is not."
+              body={[
+                "Every tool that only reads ran on request. The one that changes a ticket did not. The loop stopped, showed you the exact action, and waited.",
+                "That pause is not the model being careful. It is six lines in the agent loop that refuse to execute a write without an answer. Approve it and the tool runs. Decline it and nothing does, and the Copilot is told so rather than left to guess.",
+              ]}
+            />
           </div>
         </section>
 
@@ -75,6 +84,13 @@ export default function Page() {
             <p className="mt-4 text-[16px] leading-relaxed text-ink">
               A standard door costs little to build. Copying tools into a second codebase costs
               something every week after.
+            </p>
+            <p className="mt-4 text-[16px] leading-relaxed text-ink">
+              The third problem arrives later, and it is the one worth deciding early. Every tool
+              here reads, except one. While an agent only reads, a mistake is a wrong answer. The
+              day it cancels a booking or reassigns a gate, the same mistake is an incident. The
+              boundary in step four is what separates those two situations, and it is a property of
+              your code, not of the model.
             </p>
             <p className="mt-6 text-[15px] leading-relaxed text-ink">
               If you want the mechanism, including the exact messages,{" "}

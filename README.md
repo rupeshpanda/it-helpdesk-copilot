@@ -1,20 +1,37 @@
 # IT Helpdesk Copilot
 
 An Elegance AI lab. A live, chat-based AI Operations Copilot for a fictional
-USA-based company running SAP, built to make three concepts visible while
-they happen rather than merely described: tool calling, persistent memory,
-and the Model Context Protocol (MCP).
+USA-based company running SAP, built to make four ideas visible while they
+happen rather than merely described: tool calling, persistent memory, the
+Model Context Protocol (MCP), and the approval boundary around any action
+that changes something.
 
 Live demo: `/lab/it-helpdesk-copilot` · Concepts guide: `/guide`
 
 ## What this is
 
 Every reply in the demo is a live call to `claude-sonnet-4-5`, deciding which
-of eight tools to use and with what arguments. Nothing is scripted. The demo
-is deliberately built with **no MCP SDK** - the JSON-RPC-shaped
+of eight tools to use and with what arguments. Nothing is scripted. Seven of
+those tools only read. The one that changes a ticket cannot run until a
+person presses Approve.
+
+The demo is deliberately built with **no MCP SDK**. The JSON-RPC-shaped
 `initialize` / `tools/list` / `tools/call` message lifecycle is hand-rolled
 TypeScript, so the mechanics MCP standardises are visible in the code rather
 than hidden behind a library.
+
+## The approval boundary
+
+`lib/agent/run.ts` keeps a `WRITE_TOOLS` set. When the model asks for a tool
+in it, the loop runs nothing at all, including any read-only calls in the
+same batch, so the operator sees one decision rather than a half-finished
+action. It returns the proposed tool name and arguments, plus the
+conversation state, and stops.
+
+A decision comes back to the same endpoint. Approve and the call is executed
+through MCP and the loop continues. Decline and the model is handed a
+`declined` result, so it says the action was refused instead of implying it
+happened. The model asks either way. The loop decides.
 
 ## Architecture
 
@@ -23,16 +40,16 @@ than hidden behind a library.
 | `lib/agent/data.ts` | Mock SAP data: tickets, employees, system health, knowledge base. |
 | `lib/agent/tools.ts` | Six plain functions reading that data, each returning `{status: "ok"/"error", ...}`. |
 | `lib/agent/memory.ts` | `remember`/`recall` executed against a request-scoped memory blob, plus the context-summary builder folded into the system prompt. |
-| `lib/agent/schemas.ts` | Tool declarations (name/description/JSON Schema) - the only interface the model sees. |
+| `lib/agent/schemas.ts` | Tool declarations (name/description/JSON Schema). The only interface the model sees. |
 | `lib/agent/registry.ts` | Wires the six data tools plus `remember`/`recall` into an MCP `ToolRegistry` for one request. |
-| `lib/agent/run.ts` | The agent loop (the MCP Host): ask, receive a tool request, call it through the MCP client, feed the result back, repeat. |
-| `lib/mcp/registry.ts` | `ToolRegistry` - name/description/schema/function, nothing about JSON-RPC. |
-| `lib/mcp/server.ts` | `MCPServer` - the protocol boundary: `initialize`, `tools/list`, `tools/call`, JSON-RPC error objects for bad requests. |
-| `lib/mcp/client.ts` | `MCPClient` - the only thing the agent loop is allowed to call; logs every request/response pair. |
+| `lib/agent/run.ts` | The agent loop (the MCP Host): ask, receive a tool request, call it through the MCP client, feed the result back, repeat. Also holds the approval boundary: a tool listed in `WRITE_TOOLS` never runs on the model's say-so. The loop stops, returns the proposal, and resumes only on an explicit decision. |
+| `lib/mcp/registry.ts` | `ToolRegistry`. Name, description, schema and function, with nothing about JSON-RPC. |
+| `lib/mcp/server.ts` | `MCPServer`. The protocol boundary: `initialize`, `tools/list`, `tools/call`, JSON-RPC error objects for bad requests. |
+| `lib/mcp/client.ts` | `MCPClient`. The only thing the agent loop is allowed to call; logs every request/response pair. |
 | `app/api/lab/it-helpdesk-copilot/chat/route.ts` | The chat API route: rate limiting, input caps, a relevance gate, then `runAgent()`. |
 | `app/api/lab/it-helpdesk-copilot/other-team/route.ts` | A second consumer of the same tools with no language model at all (the site's `gatebot.py`): a different client name, the same `MCPServer`, the same three messages. Its exchange appears in the trace panel next to the agent's. |
 | `lib/client/describeRpc.ts`, `lib/client/describeToolCall.ts` | Plain-language descriptions of JSON-RPC exchanges and tool calls, so the trace and the chat read as sentences first and wire format second. |
-| `lib/client/memoryStorage.ts` | Reads/writes the browser's `localStorage` - the "disk" this demo uses in place of a server-side database. |
+| `lib/client/memoryStorage.ts` | Reads/writes the browser's `localStorage`. The "disk" this demo uses in place of a server-side database. |
 | `components/HelpdeskDemo.tsx` | Owns chat/memory/trace state; the only client component that calls the API. |
 | `components/ChatPanel.tsx`, `MemoryPanel.tsx`, `McpTracePanel.tsx` | The three panels: chat, stored facts, and the live JSON-RPC trace. |
 
@@ -46,7 +63,7 @@ which folds them into the system prompt and executes any `remember`/`recall`
 calls against that blob for the current turn. Any writes come back as
 `memoryOps`, which the client applies to `localStorage` after the response
 lands. "Restart" in this demo means reloading the page or returning later in
-the same browser - an honest instance of the same persistence concept, with
+the same browser. An honest instance of the same persistence concept, with
 no new infrastructure.
 
 **Conflict rule:** same key overwrites the old value, last write wins. The
