@@ -1,42 +1,46 @@
 import type { MemoryStore } from "@/lib/agent/memory";
 
-/**
- * Live view of everything currently in the browser's localStorage - the
- * same role memory.build_context_summary() plays for the Python system
- * prompt, made visible here instead of hidden in a prompt.
- */
-export function MemoryPanel({ memory }: { memory: MemoryStore }) {
+/** Everything the Copilot has written down, read from this browser. */
+export function MemoryPanel({
+  memory,
+  onForget,
+}: {
+  memory: MemoryStore;
+  onForget?: () => void;
+}) {
   const entries = Object.entries(memory);
 
   return (
     <div className="rounded-lg border border-border bg-card p-5">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="font-serif text-lg text-navy">Memory</h3>
-        <span className="tag-badge">localStorage</span>
+        <span className="tag-badge">this browser</span>
       </div>
       {entries.length === 0 ? (
-        <p className="text-[13.5px] text-muted">
-          Nothing stored yet. State a preference below and the Copilot may remember it.
-        </p>
+        <p className="text-[14px] text-ink">Nothing stored.</p>
       ) : (
-        <ul className="space-y-3">
+        <ul className="space-y-2.5">
           {entries.map(([key, fact], i) => (
-            <li key={key} className={i > 0 ? "rule-top pt-3" : ""}>
+            <li key={key} className={i > 0 ? "rule-top pt-2.5" : ""}>
               <div className="wire text-ink">
                 <span className="text-accent">{key}</span>
                 <span className="text-muted">: </span>
                 <span>{fact.value}</span>
               </div>
-              <div className="mt-1 text-[11.5px] text-muted">
-                source: {fact.source} · {new Date(fact.updatedAt).toLocaleString()}
-              </div>
             </li>
           ))}
         </ul>
       )}
-      <p className="mt-4 text-[12px] text-muted">
-        This survives a page reload or closing the tab, in this browser - it is not tied to the
-        current chat session.
+      <p className="mt-4 text-[12.5px] leading-relaxed text-muted">
+        Kept in this browser only. Nothing is stored on a server.
+        {onForget && entries.length > 0 && (
+          <>
+            {" "}
+            <button onClick={onForget} className="text-accent underline underline-offset-2 hover:text-accent-hover">
+              Forget everything
+            </button>
+          </>
+        )}
       </p>
     </div>
   );

@@ -1,87 +1,120 @@
-import { Footer, Header, SectionLabel } from "@/components/Chrome";
+import { Footer, Header } from "@/components/Chrome";
 import { HelpdeskDemo } from "@/components/HelpdeskDemo";
-
-function Block({ n, title, body }: { n: string; title: string; body: string }) {
-  return (
-    <div>
-      <div className="mb-2 font-mono text-[12px] text-muted">{n}</div>
-      <h3 className="mb-2 font-serif text-[17px] text-navy">{title}</h3>
-      <p className="text-[13.5px] leading-relaxed text-muted">{body}</p>
-    </div>
-  );
-}
 
 export default function Page() {
   return (
     <>
       <Header current="lab" />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-10">
-        <SectionLabel>Live demo</SectionLabel>
-        <span className="tag-badge mb-4 inline-block">Tool calling · Memory · MCP</span>
-        <h1 className="mb-4 max-w-2xl font-serif text-[34px] leading-tight text-navy sm:text-[40px]">
-          An IT helpdesk agent that remembers you, and shows its work.
-        </h1>
-        <p className="mb-3 max-w-2xl text-[15px] leading-relaxed text-muted">
-          This is a small AI Operations Copilot for a fictional, USA-based company running SAP.
-          It answers ticket, system-status, and access questions by calling real tools against a
-          mock database. Nothing here is hand-scripted: every reply below is a live model call
-          deciding which tool to use, with what arguments, in what order.
-        </p>
-        <p className="mb-10 max-w-2xl text-[15px] leading-relaxed text-muted">
-          Tell it something worth remembering, click &ldquo;New session,&rdquo; and ask a
-          follow-up that only resolves correctly if that fact survived. The panel on the right
-          shows the raw protocol messages behind every tool call - the same JSON-RPC shape a real
-          Model Context Protocol server and client would exchange.
-        </p>
 
-        <HelpdeskDemo />
-
-        <div className="mt-16 grid gap-8 sm:grid-cols-3">
-          <Block
-            n="01"
-            title="A tool call, not a guess"
-            body="The model never touches the ticket database directly. It reads a text description of what each tool does, and asks the Copilot's code to run one. The code decides whether to comply."
-          />
-          <Block
-            n="02"
-            title="Memory outside the conversation"
-            body="Facts you state are written to this browser's storage, not the chat history. Reload the page, come back tomorrow - the fact is still there, because it never depended on the conversation surviving."
-          />
-          <Block
-            n="03"
-            title="A standard door, not a private import"
-            body="Every tool call crosses a hand-built boundary shaped like the Model Context Protocol (MCP), an open standard for how an agent talks to its tools: initialize, tools/list, tools/call. The agent never imports the tool functions. Press the other team's bot button in the trace panel and a second program, with no model in it, uses the same door."
-          />
-        </div>
-
-        <div className="mt-16 max-w-2xl rule-top pt-10">
-          <h2 className="mb-4 font-serif text-2xl text-navy">Why this matters</h2>
-          <p className="mb-4 text-[14.5px] leading-relaxed text-muted">
-            Most internal AI assistants stop at the first version of the two problems this demo
-            is built around: they forget everything the moment a session ends, and their tools
-            are wired directly into one codebase, unreachable by any other team's agent without a
-            copy-paste. Neither problem is exotic. Both show up the first week a second team asks
-            to use &ldquo;the tools,&rdquo; or the first time a user has to re-explain something
-            they already said yesterday.
+      <main className="mx-auto w-full max-w-5xl px-5">
+        <section className="pt-14 pb-8">
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <span className="tag-badge">Tool calling</span>
+            <span className="tag-badge">Memory</span>
+            <span className="tag-badge">MCP</span>
+            <span className="tag-badge">Live demo</span>
+          </div>
+          <h1 className="max-w-3xl font-serif text-4xl leading-tight text-navy md:text-5xl">
+            IT Helpdesk Copilot
+          </h1>
+          <p className="mt-5 max-w-2xl text-[17px] leading-relaxed text-ink">
+            A helpdesk agent for a fictional US company that runs SAP. It answers from real tools
+            over mock data, and every reply is a live model call.
           </p>
-          <p className="text-[14.5px] leading-relaxed text-muted">
-            Read the{" "}
-            <a href="/guide" className="text-accent hover:underline">
-              concepts guide
-            </a>{" "}
-            for how tool calling, persistent memory, and the Model Context Protocol actually work
-            underneath this page, or see the{" "}
-            <a
-              href="https://github.com/rupeshpanda/it-helpdesk-copilot"
-              className="text-accent hover:underline"
-            >
-              source on GitHub
-            </a>
-            .
+          <p className="mt-3 max-w-2xl text-[17px] leading-relaxed text-ink">
+            Three short steps. What a tool call is. What memory changes. What MCP adds.
           </p>
-        </div>
+          <p className="mt-3 max-w-2xl text-[17px] leading-relaxed text-ink">Press the first button.</p>
+        </section>
+
+        <section className="pb-14">
+          <HelpdeskDemo />
+        </section>
+
+        <section className="border-t border-border py-14">
+          <h2 className="max-w-3xl font-serif text-3xl leading-snug text-navy">What just happened</h2>
+          <div className="mt-8 grid gap-6 md:grid-cols-3">
+            <Block
+              n="01"
+              title="The model never touched the data"
+              body={[
+                "It read a one line description of each tool and asked for one by name. The Copilot's code ran it and handed back the result. That is the whole of tool calling.",
+                "The description is the interface. Change it and the model changes what it asks for.",
+              ]}
+            />
+            <Block
+              n="02"
+              title="Memory is outside the chat"
+              body={[
+                "The fact you stated was written to this browser, not to the conversation. You started over and the chat was empty. The fact was not.",
+                "One rule decides conflicts. The newest value wins.",
+              ]}
+            />
+            <Block
+              n="03"
+              title="MCP is the door, not the tools"
+              body={[
+                "The Model Context Protocol fixes how an agent asks for a tool: connect, list, call. The Copilot never imports the tool code. It only speaks the protocol.",
+                "So a second program spoke it too, with no model at all, and got the same answer from the same server.",
+              ]}
+            />
+          </div>
+        </section>
+
+        <section className="border-t border-border py-14">
+          <div className="max-w-3xl">
+            <h2 className="font-serif text-3xl leading-snug text-navy">Why this matters more than it looks</h2>
+            <p className="mt-5 text-[16px] leading-relaxed text-ink">
+              Most internal assistants have both problems this page shows. They forget everything
+              when the session ends. Their tools are wired into one codebase.
+            </p>
+            <p className="mt-4 text-[16px] leading-relaxed text-ink">
+              Neither shows up in a demo. Both show up the first week a second team asks for
+              access, or the first time a user has to repeat what they said yesterday.
+            </p>
+            <p className="mt-4 text-[16px] leading-relaxed text-ink">
+              A standard door costs little to build. Copying tools into a second codebase costs
+              something every week after.
+            </p>
+            <p className="mt-6 text-[15px] leading-relaxed text-ink">
+              If you want the mechanism, including the exact messages,{" "}
+              <a href="/guide" className="text-accent underline underline-offset-2 hover:text-accent-hover">
+                read the guide
+              </a>
+              .
+            </p>
+            <div className="mt-8 rounded-lg border border-border bg-bg-secondary p-6">
+              <p className="text-[14.5px] leading-relaxed text-muted">
+                Every reply above is live. It is made when you press the button. Nothing is
+                scripted and no run is selected. The code is in{" "}
+                <a
+                  href="https://github.com/rupeshpanda/it-helpdesk-copilot"
+                  className="text-accent underline underline-offset-2 hover:text-accent-hover"
+                >
+                  the repository
+                </a>
+                .
+              </p>
+            </div>
+          </div>
+        </section>
       </main>
+
       <Footer />
     </>
+  );
+}
+
+function Block({ n, title, body }: { n: string; title: string; body: string[] }) {
+  return (
+    <div>
+      <span className="section-label">{n}</span>
+      <h3 className="font-serif text-xl leading-snug text-navy">{title}</h3>
+      {body.map((p, i) => (
+        <p key={i} className="mt-3 text-[14.5px] leading-relaxed text-ink">
+          {p}
+        </p>
+      ))}
+    </div>
   );
 }
