@@ -4,7 +4,7 @@ import { Footer, Header, SectionLabel } from "@/components/Chrome";
 export const metadata: Metadata = {
   title: "How it works | IT Helpdesk Copilot",
   description:
-    "The model never touches your systems. It asks, and your code decides. What a tool call is, what memory changes, and what MCP adds.",
+    "What a tool is, what memory changes, what MCP adds, and where an agent must stop and ask. Written for people deciding whether to build one.",
 };
 
 export default function Page() {
@@ -16,135 +16,140 @@ export default function Page() {
         <section className="py-16">
           <SectionLabel>How it works</SectionLabel>
           <h1 className="max-w-3xl font-serif text-4xl leading-tight text-navy md:text-5xl">
-            The model never touches your systems. It asks, and your code decides.
+            A model that cannot reach anything will still answer you.
           </h1>
           <p className="mt-6 max-w-2xl text-[17px] leading-relaxed text-ink">
-            Everything on the demo page follows from that one sentence. Four parts below. What a
-            tool call is. What memory changes. What MCP adds. And where the asking stops.
+            That is the problem the first column on the demo page exists to show, and it is where
+            most internal AI work starts. Four parts below. What a tool is. What memory changes.
+            What MCP adds. And where an agent has to stop and ask a person.
           </p>
         </section>
 
-        <Section n="01" label="Tool calling" title="A tool is code you already have">
+        <Section n="01" label="Tools" title="A tool is code you already have">
           <p>
-            The Copilot has six functions that read tickets, system status, employee access and
-            knowledge base articles. Ordinary code. It worked before any model was involved and it
-            would keep working if you deleted the model tomorrow.
+            Nothing about a tool is an AI idea. The Copilot has six functions that read tickets,
+            employee records, system health and knowledge base articles. Ordinary code. It worked
+            before any model was involved and it would keep working if you deleted the model
+            tomorrow.
           </p>
           <p>
-            What makes that code a tool is the declaration written alongside it. A name. A sentence
-            saying what it does and when to use it. A schema for the arguments. The model sees that
-            and nothing else. Not the function, not the database.
+            What turns that code into a tool is the declaration written beside it. A name. A
+            sentence saying what it does and when to use it. A schema for the arguments. The model
+            sees that and nothing else. Not the function, not the database, not the row it returns
+            until it asks.
           </p>
           <p>
-            So when you asked whether SAP S/4HANA was up, the model did not check. It returned a
-            small block of JSON naming one tool and one argument. The Copilot read that block, ran
-            the function itself, and handed the result back.
+            So the model never checks anything. It writes out, as structured text, which tool it
+            wants and what to pass. Your program reads that, decides whether to honour it, runs the
+            real function, and hands the result back. Every action an agent has ever taken was a
+            line of somebody&rsquo;s code choosing to comply.
           </p>
           <p className="border-l-2 border-accent pl-4 text-muted">
-            Your code decides whether to comply. Run it. Refuse it. Log it. Stop and ask a human
-            first. Every action an agent has ever taken was a line of somebody&rsquo;s code choosing
-            to honour a request.
+            This is also why the wording matters more than people expect. A vague description gets
+            you a tool called with the wrong argument, and a tool called with the wrong argument
+            returns a perfectly valid answer to a question nobody asked.
           </p>
         </Section>
 
-        <Section n="02" label="Memory" title="A conversation forgets. Memory does not.">
+        <Section n="02" label="Memory" title="A conversation forgets. An operation cannot.">
           <p>
             A model is sent the whole conversation on every turn. That list is the only thing it
-            remembers, and it dies when the session does. This is why most assistants make you
-            repeat yourself.
+            knows, and it dies when the session does. This is why most assistants make a person
+            repeat themselves, and why they cannot hold a rule for longer than an afternoon.
           </p>
           <p>
-            Memory is a second, much smaller place to write things down. Here it is your browser.
-            State a fact and the Copilot stores it. Start a new session and a summary of everything
-            stored is read back before you type a word.
+            Memory is a second, much smaller place to write things down, read back before the first
+            word of the next session. In this demo it is your browser, chosen so the lab needs no
+            database. In a real deployment it is a table.
           </p>
           <p>
-            That is why the second step worked. The chat was empty. The fact was not, so the
-            Copilot knew which team to escalate to without being told again.
+            What goes in it is the interesting part. Not chat history. Policy. The third column on
+            the demo page has one sentence in memory: California offices route to Basis East. That
+            sentence changed where a ticket went, a week after somebody said it, without anyone
+            repeating it. That is the difference between an assistant and a colleague who has
+            worked here a while.
           </p>
           <p>
-            One rule decides conflicts. Restate a fact with a different value and the new value
-            replaces the old one. The newest wins. That rule is fine for one operator and breaks at
-            ten thousand, where facts have to be scoped to the person who stated them or one
-            user&rsquo;s preference quietly overwrites another&rsquo;s.
+            One rule settles conflicts. Restate a fact and the new value replaces the old one. That
+            is fine for one service desk and it breaks at ten thousand users, where facts have to be
+            scoped to whoever stated them or one person&rsquo;s preference quietly becomes
+            everybody&rsquo;s.
           </p>
         </Section>
 
         <Section n="03" label="MCP" title="A standard door, so the second team does not need a copy">
           <p>
-            These tools could have been wired straight into the Copilot. That works until a second
+            The tools could have been wired straight into the Copilot. That works until a second
             team asks for access. Then there are two options. Hand over a copy of the code, which
-            will drift from yours by the second week. Or agree on an interface both sides speak.
+            will drift from yours inside a month. Or agree on an interface both sides speak.
           </p>
           <p>
             The Model Context Protocol is the second option, written down. Three messages. Connect
-            to the server. Ask what it offers. Call one of the things it offers.
+            to the tool server. Ask what it offers. Call one of the things it offers.
           </p>
           <p>
-            The Copilot never imports the tool code. It only speaks the protocol. That is why the
-            button on the third step worked. A separate program, with no model inside it at all,
-            asked the same server in the same way and got the same answer.
+            Notice the middle one. The agent does not know what it can do until it asks. Its
+            capabilities are a property of the server, not of its own code, which means what an
+            agent may touch becomes something you configure rather than something you rewrite. For
+            anyone who has to answer for what a system is allowed to do, that is the whole
+            attraction.
           </p>
           <p>
-            What MCP does not do is worth naming plainly. It carries one call at a time, answered
-            once, by one server. Two agents negotiating a task between themselves, asking each
-            other questions before committing to anything, is a harder problem and a different
+            What MCP does not do is worth saying plainly. It carries one request at a time,
+            answered once, by one server. Two agents negotiating a task between themselves, asking
+            each other questions before committing to anything, is a harder problem and a different
             protocol.
           </p>
         </Section>
 
         <Section n="04" label="Control" title="Reading is safe. Changing something is not.">
           <p>
-            Six of the seven tools only read. Asking for one of those is cheap, and a wrong answer
-            is the worst outcome. The seventh changes a ticket, and that is a different kind of
-            request entirely.
+            Six of the seven tools only read. The seventh changes a ticket, and the loop treats it
+            differently. When the model asked to escalate, nothing ran. It returned the exact tool
+            and arguments it wanted, and waited.
           </p>
           <p>
-            So the loop treats it differently. When the model asked to escalate, nothing ran. The
-            loop stopped, handed back the exact tool name and arguments it had been asked for, and
-            waited for a person. Approve and the tool runs. Decline and it never does, and the
-            model is told plainly that the action was refused, so it reports that instead of
-            claiming success.
+            Approve and the call executes. Decline and it never does, and the model is told plainly
+            that it was refused, so it reports the refusal instead of writing a summary implying the
+            work was done.
           </p>
           <p>
-            Nothing about that is the model being careful. The model asked for the same thing
-            either way. The difference is a few lines in the loop that check whether a tool changes
-            anything before running it.
+            None of that is the model being careful. It asked for the same thing either way. The
+            difference is a few lines in the loop that check whether a tool changes anything before
+            running it.
           </p>
           <p className="border-l-2 border-accent pl-4 text-muted">
-            This is the question worth settling before an agent reaches production, not after.
-            While it only reads, a mistake is a wrong answer. The day it cancels an order, the same
-            mistake is an incident.
+            Settle this before an agent reaches production, not after. While it only reads, a
+            mistake is a wrong answer. The day it reassigns a real ticket, the same mistake is an
+            incident.
           </p>
         </Section>
 
-        <Section n="05" label="End to end" title="What happened when you pressed the button">
+        <Section n="05" label="End to end" title="What happens when you press the button">
           <ol className="space-y-3 text-[15.5px] leading-relaxed text-ink">
             {[
-              "Your browser sent the question, along with whatever facts it had stored.",
-              "The server turned those facts into a short summary and put it in the model's instructions.",
-              "It built a tool server and a client for this one request, then asked the client what tools existed.",
-              "The model read the question and the tool list, and asked for a tool by name.",
-              "If that tool only reads, the client passed the request across the protocol boundary and the server ran it. If it changes something, the loop stopped here and waited for you.",
-              "The model read the result and answered in plain language. Anything worth remembering was written back to your browser.",
+              "Three runs start at once, one per column. Same ticket, same model, same instructions.",
+              "Each one is given whatever memory its column has, folded into the model's instructions before the question.",
+              "The two columns with tools build a tool server and a client, then ask the client what exists.",
+              "The model reads the question and the tool list, and asks for a tool by name.",
+              "The client carries that request across the protocol boundary. The server runs the function and returns the result. This repeats until the model has enough.",
+              "If it asks for something that changes a ticket, the loop stops there and reports the proposal instead of running it.",
             ].map((step, i) => (
               <li key={i} className="flex gap-3">
-                <span className="font-mono text-[13px] text-muted">{String(i + 1).padStart(2, "0")}</span>
+                <span className="font-mono text-[13px] text-muted">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
                 <span>{step}</span>
               </li>
             ))}
           </ol>
-          <p className="mt-6">
-            Steps four and five can repeat several times before the model has enough to answer. The
-            demo shows each pass as its own line.
-          </p>
         </Section>
 
         <section className="border-t border-border py-14">
           <div className="max-w-3xl rounded-lg border border-border bg-bg-secondary p-6">
             <p className="text-[14.5px] leading-relaxed text-muted">
-              The protocol layer here is written by hand, with no MCP library, so the three messages
-              are readable in about a hundred lines. Everything is in{" "}
+              The protocol layer is written by hand, with no MCP library, so the three messages are
+              readable in about a hundred lines. Everything is in{" "}
               <a
                 href="https://github.com/rupeshpanda/it-helpdesk-copilot"
                 className="text-accent underline underline-offset-2 hover:text-accent-hover"

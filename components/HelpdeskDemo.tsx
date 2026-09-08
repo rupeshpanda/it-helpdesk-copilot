@@ -1,205 +1,218 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ChatPanel, type Entry } from "./ChatPanel";
-import { MemoryPanel } from "./MemoryPanel";
-import { TicketQueue, workTicketPrompt } from "./TicketQueue";
-import type { Ticket } from "@/lib/agent/data";
-import { applyMemoryOps, clearMemory, loadMemory } from "@/lib/client/memoryStorage";
-import type { PendingAction, TraceStep } from "@/lib/agent/run";
-import type { MemoryStore } from "@/lib/agent/memory";
+import { useState } from "react";
+import { EMPLOYEES, TICKETS } from "@/lib/agent/data";
+import { POLICY_TEXT, TICKET_ID, VARIANTS, type VariantKey } from "@/lib/agent/variants";
+import type { TraceStep } from "@/lib/agent/run";
 import type { RpcLogEntry } from "@/lib/mcp/client";
+import { describeToolCall } from "@/lib/client/describeToolCall";
+import { judgeNoTools } from "@/lib/client/verdict";
+import { McpPanel } from "./McpPanel";
 
 /**
- * One chat. Everything the agent does is shown in the transcript, beside
- * the answer it produced: the tools it called, the protocol messages it
- * sent, and the approval prompt when it wants to change something. Memory
- * sits in one box that never moves. The concepts are explained below the
- * demo, not narrated over it.
+ * One ticket, worked three ways at once. Everything is held constant except
+ * what the agent can reach and what it has been told to remember, so the
+ * difference between the columns is the lesson.
  */
 
-interface ChatResponse {
-  reply: string;
-  trace: TraceStep[];
+interface Run {
+  answer: string;
+  tools: TraceStep[];
+  proposal: string | null;
   mcpLog: RpcLogEntry[];
-  memoryOps?: Parameters<typeof applyMemoryOps>[0];
-  pending?: PendingAction;
-  resumeState?: unknown[];
-  error?: string;
+  elapsedMs: number;
 }
 
-interface OtherResponse {
-  toolsAvailable: number;
-  result: { status: string; system?: string; systemStatus?: string; message?: string };
-  mcpLog: RpcLogEntry[];
-  error?: string;
-}
+type PanelState =
+  | { status: "idle" }
+  | { status: "running" }
+  | { status: "done"; run: Run }
+  | { status: "failed"; error: string };
+
+const ORDER: VariantKey[] = ["none", "tools", "memory"];
+
+const TAKEAWAY: Record<VariantKey, string> = {
+  none: "", // computed from the run, see judgeNoTools
+  tools: "Four lookups against real records. It routes to the team the ticket is assigned to.",
+  memory: "The same four lookups, in the same order. A standing instruction sends it somewhere else.",
+};
 
 export function HelpdeskDemo() {
-  const [entries, setEntries] = useState<Entry[]>([]);
-  const [memory, setMemory] = useState<MemoryStore>({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState<PendingAction | null>(null);
-  const [resumeState, setResumeState] = useState<unknown[] | null>(null);
+  const [panels, setPanels] = useState<Record<VariantKey, PanelState>>({
+    none: { status: "idle" },
+    tools: { status: "idle" },
+    memory: { status: "idle" },
+  });
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    setMemory(loadMemory());
-  }, []);
+  const ticket = TICKETS[TICKET_ID];
+  const who = EMPLOYEES[ticket.employeeId];
 
-  /** The API wants the conversation, not the annotations. */
-  function historyFrom(list: Entry[]) {
-    return list
-      .filter((e): e is Extract<Entry, { kind: "user" | "agent" }> =>
-        e.kind === "user" || e.kind === "agent",
-      )
-      .map((e) => ({
-        role: e.kind === "user" ? ("user" as const) : ("assistant" as const),
-        content: e.text,
-      }))
-      .filter((m) => m.content);
+  async function runAll() {
+    setBusy(true);
+    setPanels({ none: { status: "running" }, tools: { status: "running" }, memory: { status: "running" } });
+
+    await Promise.all(
+      ORDER.map(async (variant) => {
+        try {
+          const res = await fetch("/api/lab/it-helpdesk-copilot/compare", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ variant }),
+          });
+          const data = await res.json();
+          setPanels((p) => ({
+            ...p,
+            [variant]: res.ok
+              ? { status: "done", run: data as Run }
+              : { status: "failed", error: data.error ?? "Something went wrong." },
+          }));
+        } catch {
+          setPanels((p) => ({
+            ...p,
+            [variant]: { status: "failed", error: "Could not reach the Copilot." },
+          }));
+        }
+      }),
+    );
+
+    setBusy(false);
   }
 
-  function absorb(data: ChatResponse, base: Entry[]) {
-    if (data.memoryOps?.length) setMemory(applyMemoryOps(data.memoryOps));
-
-    const next: Entry[] = [...base];
-    if (data.reply || data.trace?.length) {
-      next.push({
-        kind: "agent",
-        text: data.reply ?? "",
-        tools: data.trace ?? [],
-        rpc: data.mcpLog ?? [],
-      });
-    }
-    setEntries(next);
-
-    if (data.pending && data.resumeState) {
-      setPending(data.pending);
-      setResumeState(data.resumeState);
-    } else {
-      setPending(null);
-      setResumeState(null);
-    }
-  }
-
-  async function send(text: string) {
-    setError(null);
-    const next: Entry[] = [...entries, { kind: "user", text }];
-    setEntries(next);
-    setLoading(true);
-    try {
-      const res = await fetch("/api/lab/it-helpdesk-copilot/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: historyFrom(next), memory }),
-      });
-      const data = (await res.json()) as ChatResponse;
-      if (!res.ok) {
-        setError(data.error ?? "Something went wrong.");
-        return;
-      }
-      absorb(data, next);
-    } catch {
-      setError("Could not reach the Copilot. Try again in a moment.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function decide(approved: boolean) {
-    if (!resumeState) return;
-    setError(null);
-    setPending(null);
-    setLoading(true);
-    try {
-      const res = await fetch("/api/lab/it-helpdesk-copilot/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: historyFrom(entries),
-          memory,
-          resume: { state: resumeState, approved },
-        }),
-      });
-      const data = (await res.json()) as ChatResponse;
-      if (!res.ok) {
-        setError(data.error ?? "Something went wrong.");
-        return;
-      }
-      const base: Entry[] = approved
-        ? entries
-        : [...entries, { kind: "note", text: "You declined. The tool was never called." }];
-      absorb(data, base);
-    } catch {
-      setError("Could not reach the Copilot. Try again in a moment.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function otherProgram() {
-    setError(null);
-    setLoading(true);
-    try {
-      const res = await fetch("/api/lab/it-helpdesk-copilot/other-team", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ system: "SAP S/4HANA" }),
-      });
-      const data = (await res.json()) as OtherResponse;
-      if (!res.ok) {
-        setError(data.error ?? "The other program could not reach the tool server.");
-        return;
-      }
-      const r = data.result;
-      setEntries((prev) => [
-        ...prev,
-        {
-          kind: "other",
-          text:
-            r.status === "ok"
-              ? `A status bot with no model inside it asked the same server and got the same answer. ${r.system} is ${r.systemStatus}. It was offered all ${data.toolsAvailable} tools, and it never imported a line of the Copilot's code.`
-              : `The status bot got an error: ${r.message ?? "unknown"}.`,
-          rpc: data.mcpLog ?? [],
-        },
-      ]);
-    } catch {
-      setError("Could not reach the tool server. Try again in a moment.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function newSession() {
-    setEntries([
-      { kind: "note", text: "New session. The chat is empty. The memory is not." },
-    ]);
-    setPending(null);
-    setResumeState(null);
-    setError(null);
-  }
-
-  function workTicket(t: Ticket) {
-    void send(workTicketPrompt(t));
-  }
+  const toolsRun = panels.tools.status === "done" ? panels.tools.run : null;
+  const anyDone = ORDER.some((v) => panels[v].status === "done");
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[1.45fr_1fr] lg:items-start">
-      <ChatPanel
-        entries={entries}
-        loading={loading}
-        error={error}
-        pending={pending}
-        onSend={(t) => void send(t)}
-        onDecide={(a) => void decide(a)}
-        onNewSession={newSession}
-        onOtherProgram={() => void otherProgram()}
-      />
-      <div className="flex flex-col gap-5">
-        <TicketQueue onWork={workTicket} busy={loading} />
-        <MemoryPanel memory={memory} onForget={() => setMemory(clearMemory())} />
+    <div className="space-y-6">
+      {/* The task */}
+      <div className="rounded-lg border border-border bg-card p-5">
+        <span className="section-label">The ticket</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-mono text-[13px] text-ink">{ticket.ticketId}</span>
+          <span className="rounded bg-bg-secondary px-1.5 py-0.5 text-[11px] font-medium text-muted">
+            {ticket.priority}
+          </span>
+          <span className="text-[13px] text-muted">{ticket.system}</span>
+        </div>
+        <p className="mt-2 text-[15px] leading-relaxed text-ink">{ticket.description}</p>
+        <p className="mt-1 text-[13px] text-muted">
+          Raised by {who.name}, {who.department}, {who.location}. Currently assigned to{" "}
+          {ticket.assignedTeam}.
+        </p>
+
+        <button
+          onClick={() => void runAll()}
+          disabled={busy}
+          className="mt-4 rounded-md bg-navy px-5 py-2.5 text-[14.5px] font-medium text-white transition-colors hover:bg-indigo-dark disabled:opacity-40"
+        >
+          {busy ? "Working the ticket…" : "Work this ticket three ways"}
+        </button>
+        <p className="mt-2 text-[12.5px] text-muted">
+          One model. One ticket. Three configurations, run at the same time.
+        </p>
       </div>
+
+      {/* The three runs */}
+      <div className="grid gap-5 lg:grid-cols-3">
+        {ORDER.map((variant) => (
+          <Panel
+            key={variant}
+            variant={variant}
+            state={panels[variant]}
+            takeaway={TAKEAWAY[variant]}
+          />
+        ))}
+      </div>
+
+      {anyDone && <McpPanel mcpLog={toolsRun?.mcpLog ?? []} />}
+    </div>
+  );
+}
+
+function Panel({
+  variant,
+  state,
+  takeaway,
+}: {
+  variant: VariantKey;
+  state: PanelState;
+  takeaway: string;
+}) {
+  const config = VARIANTS[variant];
+
+  return (
+    <div className="flex flex-col rounded-lg border border-border bg-card">
+      <div className="border-b border-border px-4 py-3">
+        <h3 className="font-serif text-[17px] text-navy">{config.title}</h3>
+        <p className="mt-0.5 text-[12.5px] text-muted">{config.setup}</p>
+        {variant === "memory" && (
+          <p className="wire mt-2 rounded border border-border bg-bg-secondary px-2 py-1.5 text-ink">
+            {POLICY_TEXT}
+          </p>
+        )}
+      </div>
+
+      <div className="flex-1 px-4 py-3.5">
+        {state.status === "idle" && (
+          <p className="text-[13px] text-muted">Waiting.</p>
+        )}
+        {state.status === "running" && (
+          <p className="text-[13px] text-muted">Working…</p>
+        )}
+        {state.status === "failed" && <p className="text-[13px] text-danger">{state.error}</p>}
+        {state.status === "done" && (
+          <>
+            <div className="mb-3">
+              <p className="mb-1.5 text-[11.5px] font-semibold uppercase tracking-wider text-muted">
+                What it looked up
+              </p>
+              {state.run.tools.length === 0 ? (
+                <p className="text-[13px] text-danger">
+                  Nothing. It had no tools, so it never checked anything.
+                </p>
+              ) : (
+                <ul className="space-y-1">
+                  {state.run.tools.map((t, i) => (
+                    <li key={i} className="text-[12.5px] leading-snug text-muted">
+                      {describeToolCall(t)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="mb-3">
+              <p className="mb-1.5 text-[11.5px] font-semibold uppercase tracking-wider text-muted">
+                What it decided
+              </p>
+              {state.run.proposal ? (
+                <p className="rounded border border-gold bg-warning-bg px-2 py-1.5 text-[13px] leading-snug text-ink">
+                  Asks to {state.run.proposal.charAt(0).toLowerCase() + state.run.proposal.slice(1)}
+                </p>
+              ) : (
+                <p className="text-[13px] text-muted">No action proposed.</p>
+              )}
+            </div>
+
+            <details>
+              <summary className="cursor-pointer select-none text-[12px] text-muted hover:text-ink">
+                Read the full answer
+              </summary>
+              <p className="mt-2 whitespace-pre-wrap text-[12.5px] leading-relaxed text-ink">
+                {state.run.answer || "It produced no text."}
+              </p>
+            </details>
+          </>
+        )}
+      </div>
+
+      <p className="border-t border-border px-4 py-3 text-[13px] leading-relaxed text-ink">
+        {variant === "none" && state.status === "done"
+          ? judgeNoTools(state.run.answer).line
+          : variant === "none"
+            ? "The model on its own, with no way to reach a ticket, a system or a person."
+            : takeaway}
+      </p>
     </div>
   );
 }

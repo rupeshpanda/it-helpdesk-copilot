@@ -18,17 +18,15 @@ export default function Page() {
             IT Helpdesk Copilot
           </h1>
           <p className="mt-5 max-w-2xl text-[17px] leading-relaxed text-ink">
-            Three tickets are waiting in a fictional US company that runs SAP. Press Work this
-            ticket and watch one get triaged: who raised it, whether the platform is healthy,
-            whether a known fix already exists, and who it should go to.
+            One SAP helpdesk ticket. One model. Three configurations, run side by side at the same
+            moment.
           </p>
           <p className="mt-3 max-w-2xl text-[17px] leading-relaxed text-ink">
-            Every lookup it makes is shown beside the answer it produced, along with the protocol
-            messages it sent to reach them. It cannot change anything without asking you first.
+            The first has no tools. The second has eight. The third has the same eight and one
+            sentence it was told to remember a week ago. Nothing else differs.
           </p>
           <p className="mt-3 max-w-2xl text-[17px] leading-relaxed text-ink">
-            Then give it a routing policy, start a new session, and work the same ticket again.
-            Same ticket, same lookups, different answer.
+            Press the button and watch where they separate.
           </p>
         </section>
 
@@ -38,37 +36,33 @@ export default function Page() {
 
         <section className="border-t border-border py-14">
           <h2 className="max-w-3xl font-serif text-3xl leading-snug text-navy">What just happened</h2>
-          <div className="mt-8 grid gap-6 md:grid-cols-2">
+
+          <div className="mt-8 grid gap-6 md:grid-cols-3">
             <Block
               n="01"
-              title="Four lookups, none of them guesses"
+              title="A tool is permission to look something up"
               body={[
-                "Working one ticket took four calls: read the ticket, look up who raised it, check whether that SAP system is healthy, search the knowledge base. Each one is an ordinary function over ordinary data. The model ran none of them.",
-                "It read a one line description of each and asked for one by name. The Copilot's code decided to comply. That is the whole of tool calling, and it is why the agent can say the platform is fine rather than assume it.",
+                "The first column is the model by itself. It cannot see a ticket, a system or a person, and it rarely says so. It usually writes the triage anyway: a requester who does not work here, a system this ticket is not about, a knowledge base article that does not exist, and a recommendation formatted exactly like the other two columns.",
+                "Read it next to column two and the invention is obvious. Read it alone, on a Tuesday, in a queue of forty, and it is not obvious at all. Nothing in it is flagged. No error is raised. It is wrong in the shape of being right.",
+                "A tool is an ordinary function you already have, wrapped in a written description. Your ticket system, your directory, your monitoring. The model runs none of them. It reads the descriptions, asks for one by name, and your code decides whether to comply. The difference between the first column and the second is not intelligence. It is reach.",
               ]}
             />
             <Block
               n="02"
-              title="Memory changed the answer, not the work"
+              title="Memory is policy that outlives the conversation"
               body={[
-                "Give it a routing policy and work the same ticket again. The four lookups are identical, in the same order. The destination team is not, because a standing instruction outranked the team the ticket was assigned to.",
-                "That policy lives outside the conversation, so it survived you starting a new session. One rule settles conflicts: restate it and the newest version wins.",
+                "The second and third columns made the same four lookups in the same order. They disagreed about where the ticket should go.",
+                "The third had been told, in some earlier session, that California offices route to Basis East. That sentence was not in the conversation. It was read back out of storage before the first word was sent, so the agent applied a standing instruction nobody repeated.",
+                "This is what memory is for in an operation. Not remembering chat. Retaining the rules your people would otherwise have to restate every morning.",
               ]}
             />
             <Block
               n="03"
-              title="MCP is the door, not the tools"
+              title="MCP is the door the tools sit behind"
               body={[
-                "Every one of those lookups crossed the same boundary: connect, ask what exists, call one. Expand the messages under any answer to see them. The Copilot never imports the tool code, and it does not know what it can do until it asks.",
-                "A second program with no model in it speaks the same three messages to the same server. That is what a standard buys: the second team does not need a copy of your agent.",
-              ]}
-            />
-            <Block
-              n="04"
-              title="Reading is safe. Changing something is not."
-              body={[
-                "The four lookups ran on request. The escalation did not. The loop stopped, showed you the exact team it wanted to send the ticket to, and waited.",
-                "That pause is not the model being careful. It is a few lines in the loop that refuse to run a write without an answer. Decline it and nothing happens, and the Copilot is told it was refused rather than left to imply it worked.",
+                "The agent did not start out knowing it had eight tools. It connected to a tool server, asked what existed, and chose from the answer. Three messages, always the same shape.",
+                "That indirection is the whole point. The tool list is a property of the server, not of the agent, so what an agent may touch becomes something you configure rather than something you rewrite.",
+                "And a second program can use the same door. The other team does not need a copy of your code, which is the version of this problem that shows up in month two.",
               ]}
             />
           </div>
@@ -76,25 +70,28 @@ export default function Page() {
 
         <section className="border-t border-border py-14">
           <div className="max-w-3xl">
-            <h2 className="font-serif text-3xl leading-snug text-navy">Why this matters more than it looks</h2>
+            <h2 className="font-serif text-3xl leading-snug text-navy">
+              Why this matters more than it looks
+            </h2>
             <p className="mt-5 text-[16px] leading-relaxed text-ink">
-              Most internal assistants have both problems this page shows. They forget everything
-              when the session ends. Their tools are wired into one codebase.
+              The first column is where most internal AI pilots stop. A capable model, no access to
+              anything, and a demo that impresses in a meeting and cannot close a ticket.
             </p>
             <p className="mt-4 text-[16px] leading-relaxed text-ink">
-              Neither shows up in a demo. Both show up the first week a second team asks for
-              access, or the first time a user has to repeat what they said yesterday.
+              The distance between column one and column two is not a better model. It is
+              integration work, and it is the part nobody budgets for.
             </p>
             <p className="mt-4 text-[16px] leading-relaxed text-ink">
-              A standard door costs little to build. Copying tools into a second codebase costs
-              something every week after.
+              The distance between column two and column three is smaller and easier to miss. Both
+              answers look competent. One of them ignores a routing rule your service desk lead set
+              in March, and nothing in the output says so.
             </p>
             <p className="mt-4 text-[16px] leading-relaxed text-ink">
-              The third problem arrives later, and it is the one worth deciding early. Every tool
-              here reads, except one. While an agent only reads, a mistake is a wrong answer. The
-              day it cancels a booking or reassigns a gate, the same mistake is an incident. The
-              boundary in step four is what separates those two situations, and it is a property of
-              your code, not of the model.
+              Notice also what none of the three columns did. Not one of them changed anything. The
+              agent proposed an escalation and stopped, because a tool that writes is held until a
+              person answers. While an agent only reads, a mistake is a wrong answer. The day it
+              reassigns a real ticket, the same mistake is an incident, and the boundary that
+              separates those two situations is in your code, not in the model.
             </p>
             <p className="mt-6 text-[15px] leading-relaxed text-ink">
               If you want the mechanism, including the exact messages,{" "}
@@ -105,8 +102,9 @@ export default function Page() {
             </p>
             <div className="mt-8 rounded-lg border border-border bg-bg-secondary p-6">
               <p className="text-[14.5px] leading-relaxed text-muted">
-                Every reply above is live. It is made when you press the button. Nothing is
-                scripted and no run is selected. The code is in{" "}
+                Every run above is live and made when you press the button. Nothing is scripted and
+                no run is selected. The ticket, the employees and the systems are invented. The
+                code is in{" "}
                 <a
                   href="https://github.com/rupeshpanda/it-helpdesk-copilot"
                   className="text-accent underline underline-offset-2 hover:text-accent-hover"

@@ -97,12 +97,15 @@ export async function runAgent(
   memory: MemoryStore,
   apiKey: string,
   resume?: Resume,
+  /** Off for the comparison's first column, where the point is to show what
+   * the same model does when it has no way to reach anything. */
+  withTools = true,
 ): Promise<RunResult> {
   const client = new Anthropic({ apiKey });
   const { registry, memoryOps } = buildRegistryForRequest(memory);
   const mcpClient = new MCPClient(new MCPServer(registry));
 
-  const toolSchemas = mcpToolsToAnthropicSchema(mcpClient.listTools());
+  const toolSchemas = withTools ? mcpToolsToAnthropicSchema(mcpClient.listTools()) : [];
   const systemPrompt = `${SYSTEM_PROMPT}\n\n${buildContextSummary(memory)}`;
 
   const messages: Anthropic.MessageParam[] = resume
@@ -145,7 +148,7 @@ export async function runAgent(
       model: MODEL,
       max_tokens: MAX_TOKENS,
       system: systemPrompt,
-      tools: toolSchemas,
+      ...(toolSchemas.length > 0 ? { tools: toolSchemas } : {}),
       messages,
     });
 
